@@ -8,5 +8,7 @@ namespace Notenmanagement.Api.Controllers
     public class AuthController : ControllerBase
     {
         //Niki
+
+        hjvhjvhvhvhvhvhj neuer text
     }
 }
