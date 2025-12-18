@@ -1,9 +1,9 @@
 ﻿using Api.DataAccess.Models;
 using Shared.DTOs;
 
-namespace Api.Services.Interfaces;
+namespace Api.DataAccess.Interfaces;
 
-public interface IAuthService
+public interface IAuthRepository
 {
     Task<Users?> RegisterAsync(RegisterRequest request);
     Task<Users?> LoginAsync(LoginRequest request);
