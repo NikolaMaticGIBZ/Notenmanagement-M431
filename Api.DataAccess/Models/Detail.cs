@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Api.DataAccess.Models;
+﻿namespace Api.DataAccess.Models;
 
 public class Detail
 {
-    //Properties => MELIH
+    public int Id { get; set; }
+    public string Comment { get; set; } = string.Empty;
+    public decimal Points { get; set; }
 }

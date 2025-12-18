@@ -8,5 +8,6 @@ namespace Api.DataAccess.Models;
 
 public class Role
 {
-    //Properties => MELIH
+    public int Id { get; set; }
+    public string RoleName { get; set; }
 }

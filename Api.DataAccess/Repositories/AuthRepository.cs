@@ -6,8 +6,7 @@ using System.Threading.Tasks;
 
 namespace Api.DataAccess.Repositories;
 
-public class ServiceRepository
+public class AuthRepository
 {
-    //Niki      hkb uh      u   hui hui h   h   uih uh  uih
     
 }

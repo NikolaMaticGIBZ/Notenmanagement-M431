@@ -8,5 +8,7 @@ namespace Api.DataAccess.Models;
 
 public class Student_Subject
 {
-    //Properties => MELIH
+    public int Id { get; set; }
+    public int StudentId { get; set; }
+    public int SubjectId { get; set; }
 }

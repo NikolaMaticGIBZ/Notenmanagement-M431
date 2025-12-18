@@ -8,5 +8,7 @@ namespace Api.DataAccess.Models;
 
 public class Subject
 {
-    //Properties => MELIH
+    public int Id { get; set; }
+    public string SubjectName { get; set; }
+    public string SubjectAbbreviation { get; set;  }
 }
