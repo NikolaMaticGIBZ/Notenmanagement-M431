@@ -1,3 +1,70 @@
-﻿@page "/registery"
+﻿@page "/register"
+@inject NavigationManager NavManager
 
-<PageTitle>Registery</PageTitle>
+<PageTitle>Registrierung</PageTitle>
+
+<nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <img src="https://www.edu.ch/media/wysiwyg/edu/schulen/gibz.png?v=1" alt="GIBZ Logo" height="40">
+        </a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link active fw-bold" href="register"><i class="bi bi-person-add"></i> Registrieren</a></li>
+                <li class="nav-item"><a class="nav-link" href="/"><i class="bi bi-person-circle"></i> Login</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-5">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-primary">Noten-Manager</h2>
+                <p class="text-muted">Erstellen Sie einen neuen Account</p>
+            </div>
+            <div class="card shadow border-0 rounded-3">
+                <div class="card-body p-4">
+                    <h4 class="card-title text-center mb-4">Registrierung</h4>
+                    <form @onsubmit="SimulateRegister">
+                        <div class="mb-3">
+                            <label class="form-label">Benutzername</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control" placeholder="MaxMuster" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">E-Mail Adresse</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control" placeholder="max@gibz.ch" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Passwort</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+                                <input type="password" class="form-control" placeholder="********" required>
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Jetzt registrieren</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center py-3 bg-light border-0 rounded-bottom-3">
+                    <small>Bereits einen Account? <a href="/" class="text-decoration-none">Hier einloggen</a></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private void SimulateRegister()
+    {
+        NavManager.NavigateTo("/");
+    }
+}

@@ -1,5 +1,73 @@
 ﻿@page "/"
+@inject NavigationManager NavManager
 
-<PageTitle>Login</PageTitle>
+<PageTitle>Login - Noten-Manager</PageTitle>
 
+<nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <img src="https://www.edu.ch/media/wysiwyg/edu/schulen/gibz.png?v=1" alt="GIBZ Logo" height="40">
+        </a>
+        <div class="collapse navbar-collapse" id="navbarScroll">
+            <ul class="navbar-nav ms-auto my-2 my-lg-0 navbar-nav-scroll" style="--bs-scroll-height: 100px;">
+                <li class="nav-item">
+                    <a class="nav-link" href="register"><i class="bi bi-person-add"></i> Registrieren</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active fw-bold" href="/"><i class="bi bi-person-circle"></i> Login</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
 
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-5">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-primary">Noten-Manager</h2>
+                <p class="text-muted">Bitte melden Sie sich an</p>
+            </div>
+            <div class="card shadow border-0 rounded-3">
+                <div class="card-body p-4">
+                    <h4 class="card-title text-center mb-4">Login</h4>
+
+                    <form @onsubmit="SimulateLogin">
+                        <div class="mb-3">
+                            <label class="form-label">E-Mail Adresse</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control" placeholder="max@schule.ch" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Passwort</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+                                <input type="password" class="form-control" placeholder="********" required>
+                            </div>
+                            <div class="text-end mt-2">
+                                <a href="#" class="text-decoration-none small text-muted">Passwort vergessen?</a>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning mt-4 mb-0 py-2">
+                            <label class="form-label small fw-bold text-warning-emphasis mb-1">Simulations-Modus:</label>
+                            <select class="form-select form-select-sm border-warning" @bind="targetRole">
+                                <option value="teacher">Als Lehrer einloggen</option>
+                                <option value="prorektor">Als Prorektor einloggen</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid mt-3">
+                            <button type="submit" class="btn btn-primary btn-lg">Einloggen</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center py-3 bg-light border-0 rounded-bottom-3">
+                    <small>Noch keinen Account? <a href="register" class="text-decoration-none">Hier registrieren</a></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
