@@ -22,7 +22,7 @@ public class Program
             options.AddPolicy("AllowFrontend",
                 policy =>
                 {
-                    policy.WithOrigins("http://localhost:5011")
+                    policy.WithOrigins("https://localhost:7199")
                           .AllowAnyHeader()
                           .AllowAnyMethod();
                 });
