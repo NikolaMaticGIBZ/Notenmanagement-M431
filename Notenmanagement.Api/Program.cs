@@ -33,9 +33,9 @@ public class Program
 
         builder.Services.AddDbContext<AppDBContext>(options =>
                 options.UseMySql(
-                builder.Configuration.GetConnectionString("Default"),
+                builder.Configuration.GetConnectionString("DefaultConnection"),
                 ServerVersion.AutoDetect(
-                    builder.Configuration.GetConnectionString("Default")
+                    builder.Configuration.GetConnectionString("DefaultConnection")
                 )
             )
         );
