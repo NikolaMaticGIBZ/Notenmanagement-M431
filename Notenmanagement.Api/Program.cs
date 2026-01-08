@@ -16,6 +16,17 @@ public class Program
         // Add services to the container.
 
         builder.Services.AddControllers();
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend",
+                policy =>
+                {
+                    policy.WithOrigins("http://localhost:5011")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+        });
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
@@ -50,6 +61,7 @@ public class Program
 
         app.UseAuthorization();
 
+        app.UseCors("AllowFrontend");
 
         app.MapControllers();
 
