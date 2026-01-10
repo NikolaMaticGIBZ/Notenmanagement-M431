@@ -1,9 +1,11 @@
-﻿using Api.DataAccess.Interfaces;
+﻿using Api.DataAccess;
+using Api.DataAccess.Interfaces;
 using Api.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
 using Shared.DTOs;
+using System.Security.Cryptography;
+using System.Text;
 
-namespace Api.DataAccess.Repositories;
 
 public class AuthRepository : IAuthRepository
 {
@@ -16,7 +18,6 @@ public class AuthRepository : IAuthRepository
 
     public async Task<Users?> RegisterAsync(RegisterRequest request)
     {
-        // Check if email or username already exists
         bool exists = await _context.Users.AnyAsync(u =>
             u.email == request.Email || u.username == request.Username);
 
@@ -51,7 +52,6 @@ public class AuthRepository : IAuthRepository
 
         if (!validPassword)
             return null;
-
         return user;
     }
 }

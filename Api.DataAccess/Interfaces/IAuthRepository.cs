@@ -7,4 +7,5 @@ public interface IAuthRepository
 {
     Task<Users?> RegisterAsync(RegisterRequest request);
     Task<Users?> LoginAsync(LoginRequest request);
+
 }

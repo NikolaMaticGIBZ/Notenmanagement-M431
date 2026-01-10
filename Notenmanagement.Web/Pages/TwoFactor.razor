@@ -1,4 +1,4 @@
-﻿@page "/2fa"
+﻿@page "/twofactor"
 @inject NavigationManager NavManager
 
 <div class="container py-5">
@@ -11,7 +11,7 @@
             </div>
             <h4 class="fw-bold mb-2">Zwei-Faktor-Auth</h4>
             <p class="text-muted small mb-4">
-              Wir haben einen 6-stelligen Code an Ihre hinterlegte Nummer (*** ** 89) gesendet.
+              Wir haben einen 6-stelligen Code an Ihre hinterlegte Email (example@example.com) gesendet.
             </p>
             <form @onsubmit="VerifyCode">
               <div class="mb-4">

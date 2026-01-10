@@ -59,7 +59,7 @@
             {
                 var user = await response.Content.ReadFromJsonAsync<UserResponse>();
                 // Save user info in localStorage (or just navigate for now)
-                NavManager.NavigateTo("/teacher"); // Redirect to grades page after login
+                NavManager.NavigateTo("/twofactor"); // Redirect to grades page after login
             }
             else
             {

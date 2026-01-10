@@ -13,6 +13,7 @@ public class AppDBContext : DbContext
     public DbSet<Rektor> Rektors { get; set; }
     public DbSet<Grades> Grades { get; set; }
 
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Users>()

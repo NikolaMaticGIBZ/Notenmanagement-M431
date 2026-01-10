@@ -13,7 +13,7 @@ namespace Notenmanagement.Web
 
             builder.Services.AddScoped(sp => new HttpClient
             {
-                BaseAddress = new Uri("https://localhost:7293/") // Your backend API
+                BaseAddress = new Uri("https://localhost:5128/") // Your backend API
             });
 
             await builder.Build().RunAsync();
