@@ -1,7 +1,10 @@
 ﻿@page "/overview"
 @using Microsoft.AspNetCore.Authorization
+@using Shared.DTOs
+@using static System.Net.WebRequestMethods
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
+@inject HttpClient Http
 
 <PageTitle>Noten Manager Übersicht</PageTitle>
 
@@ -98,6 +101,16 @@ else if (Role == "teacher")
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-secondary text-uppercase small">Rektor</label>
+                                <select class="form-select form-select-lg" @bind="SelectedRektorId" required>
+                                    <option value="">-- Wählen Sie einen Rektor --</option>
+                                    @foreach (var rektor in Rektoren)
+                                    {
+                                        <option value="@rektor.Id">@rektor.Name</option>
+                                    }
+                                </select>
                             </div>
 
                             <div class="mb-4">
@@ -269,6 +282,15 @@ else if (Role == "prorektor")
     private bool showModal = false;
     private string modalType = ""; // "approved" oder "rejected"
 
+    private int SelectedRektorId { get; set; } = 0;
+    private List<(int Id, string Name)> Rektoren = new()
+    {
+        (1, "Regula Tobler"),
+        (2, "Werner Odermmtt"),
+        (3, "Patrick Zeiger"),
+        (4, "Alex Kobel")
+    };
+
     protected override async Task OnInitializedAsync()
     {
         var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
@@ -361,10 +383,64 @@ else if (Role == "prorektor")
 
     private void CloseModal() => showModal = false;
 
-    private void ConfirmAction()
+    private async Task ConfirmAction()
     {
         showModal = false;
+
+        try
+        {
+            // Get values directly from DOM
+            var module = await JS.InvokeAsync<string>("eval", "document.getElementById('module').value");
+            var studentClass = await JS.InvokeAsync<string>("eval", "document.getElementById('studentClass').value");
+            var studentName = await JS.InvokeAsync<string>("eval", "document.getElementById('student').value");
+            var gradeStr = await JS.InvokeAsync<string>("eval", "document.getElementById('grade').value");
+            var comment = await JS.InvokeAsync<string>("eval", "document.getElementById('comment').value");
+
+            decimal gradeValue = decimal.TryParse(gradeStr, out var g) ? g : 0;
+
+            var request = new CreateGradeRequest
+            {
+                ModuleName = module,
+                CourseName = studentClass,
+                StudentName = studentName,
+                GradeValue = gradeValue,
+                RektorId = SelectedRektorId,
+            };
+
+            // Get JWT
+            var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+            if (string.IsNullOrEmpty(token))
+            {
+                await JS.InvokeVoidAsync("alert", "Sie sind nicht eingeloggt.");
+                return;
+            }
+
+            // Send HTTP request
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/grades")
+            {
+                Content = JsonContent.Create(request)
+            };
+            httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var response = await Http.SendAsync(httpRequest);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await JS.InvokeVoidAsync("eval", "document.getElementById('success-alert').classList.remove('d-none')");
+            }
+            else
+            {
+                var errorText = await response.Content.ReadAsStringAsync();
+                await JS.InvokeVoidAsync("alert", $"Fehler beim Senden: {errorText}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Fehler: {ex.Message}");
+        }
     }
+
+
     private async Task Logout()
     {
         await JS.InvokeVoidAsync("localStorage.removeItem", "jwt");
