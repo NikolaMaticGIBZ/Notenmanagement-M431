@@ -1,0 +1,140 @@
+﻿@page "/overview"
+@using Microsoft.AspNetCore.Authorization
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+
+<PageTitle>Noten Manager Übersicht</PageTitle>
+
+@if (IsAccessDenied)
+{
+    <div class="alert alert-danger mt-5 text-center">
+        <h4><i class="bi bi-x-circle-fill"></i> Zugriff verweigert</h4>
+        <p>Sie haben keine Berechtigung, diese Seite zu sehen.</p>
+    </div>
+}
+else if (Role == "teacher")
+{
+    <nav class="navbar navbar-expand-lg border-bottom shadow-sm sticky-top bg-body-tertiary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="https://www.edu.ch/media/wysiwyg/edu/schulen/gibz.png?v=1" alt="GIBZ Logo" height="40">
+            </a>
+            <div class="d-flex align-items-center ms-auto gap-2">
+                <div class="vr mx-2"></div>
+                <a href="/index.html" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right"></i> Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <!-- Hier kommt dein Teacher Formular & letzte Anträge -->
+        @* ... Einfach den bestehenden Teacher-Code kopieren ... *@
+    </div>
+}
+else if (Role == "prorektor")
+{
+    <!-- PROREKTOR UI -->
+    <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="https://www.edu.ch/media/wysiwyg/edu/schulen/gibz.png?v=1" alt="GIBZ Logo" height="40">
+                <span class="ms-2 fs-6 badge bg-dark text-white">PROREKTORAT</span>
+            </a>
+            <div class="d-flex ms-auto">
+                <a href="/" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right"></i> Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        @* ... Einfach den bestehenden Prorektor-Code kopieren ... *@
+    </div>
+}
+
+@code {
+    private string Role { get; set; } = string.Empty;
+    private bool IsAccessDenied { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+
+        if (string.IsNullOrEmpty(token))
+        {
+            NavManager.NavigateTo("/");
+            return;
+        }
+
+        if (IsTokenExpired(token))
+        {
+            await JS.InvokeVoidAsync("localStorage.removeItem", "jwt");
+            NavManager.NavigateTo("/");
+            return;
+        }
+
+        Role = GetRoleFromToken(token);
+
+        if (Role != "teacher" && Role != "prorektor")
+        {
+            IsAccessDenied = true;
+        }
+    }
+
+    private string GetRoleFromToken(string token)
+    {
+        try
+        {
+            var parts = token.Split('.');
+            if (parts.Length != 3) return string.Empty;
+
+            var payload = parts[1].Replace('-', '+').Replace('_', '/');
+            switch (payload.Length % 4)
+            {
+                case 2: payload += "=="; break;
+                case 3: payload += "="; break;
+            }
+
+            var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+            var doc = System.Text.Json.JsonDocument.Parse(json);
+
+            if (doc.RootElement.TryGetProperty("role", out var roleProp))
+                return roleProp.GetString()?.ToLower() ?? string.Empty;
+
+            if (doc.RootElement.TryGetProperty("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", out var claimRole))
+                return claimRole.GetString()?.ToLower() ?? string.Empty;
+        }
+        catch { return string.Empty; }
+
+        return string.Empty;
+    }
+
+    private bool IsTokenExpired(string token)
+    {
+        try
+        {
+            var parts = token.Split('.');
+            if (parts.Length != 3) return true;
+
+            var payload = PadBase64(parts[1]);
+            var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+            var exp = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("exp").GetInt64();
+
+            return DateTimeOffset.FromUnixTimeSeconds(exp) < DateTimeOffset.UtcNow;
+        }
+        catch
+        {
+            return true;
+        }
+    }
+
+    private string PadBase64(string base64)
+    {
+        base64 = base64.Replace('-', '+').Replace('_', '/');
+        switch (base64.Length % 4)
+        {
+            case 2: return base64 + "==";
+            case 3: return base64 + "=";
+            default: return base64;
+        }
+    }
+}
