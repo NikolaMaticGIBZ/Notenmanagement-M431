@@ -109,10 +109,8 @@
 				await JS.InvokeVoidAsync("sessionStorage.removeItem", "userId");
 				await JS.InvokeVoidAsync("sessionStorage.setItem", "userRole", result.Role);
 
-				if (result.Role == "prorektor")
-					NavManager.NavigateTo("/prorektor");
-				else
-					NavManager.NavigateTo("/teacher");
+				if (result.Role == "prorektor" || result.Role == "teacher")
+					NavManager.NavigateTo("/overview");
 			}
 			else
 			{
