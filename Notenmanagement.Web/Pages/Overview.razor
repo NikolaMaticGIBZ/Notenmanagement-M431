@@ -14,6 +14,7 @@
 }
 else if (Role == "teacher")
 {
+    <!-- ================== TEACHER UI ================== -->
     <nav class="navbar navbar-expand-lg border-bottom shadow-sm sticky-top bg-body-tertiary">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
@@ -27,13 +28,124 @@ else if (Role == "teacher")
     </nav>
 
     <div class="container py-5">
-        <!-- Hier kommt dein Teacher Formular & letzte Anträge -->
-        @* ... Einfach den bestehenden Teacher-Code kopieren ... *@
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-7">
+
+                <div id="success-alert" class="alert alert-success d-none shadow-sm" role="alert">
+                    <h4 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Gesendet!</h4>
+                    <p>Der Notenantrag wurde erfolgreich an das Prorektorat übermittelt.</p>
+                </div>
+
+                <div class="card shadow border-0 rounded-3 mb-5" id="mainCard">
+                    <div class="card-header bg-primary text-white p-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Neue Note erfassen</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="gradeForm" onsubmit="event.preventDefault(); showConfirmModal();">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-secondary text-uppercase small">1. Modul</label>
+                                <input type="text" class="form-control form-control-lg" id="module" placeholder="z.B. M-117 oder ABU" required>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label fw-bold text-secondary text-uppercase small">2. Klasse</label>
+                                    <input type="text" class="form-control" id="studentClass" placeholder="z.B. IN21a" required>
+                                </div>
+
+                                <div class="col-md-8 mb-3">
+                                    <label class="form-label fw-bold text-secondary text-uppercase small">3. Schüler Name</label>
+                                    <input type="text" class="form-control" id="student" placeholder="Vorname Nachname" required>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="row mb-3">
+                                <div class="col-md-5">
+                                    <label class="form-label fw-bold text-secondary text-uppercase small">Note (Eingabe)</label>
+                                    <div class="input-group input-group-lg">
+                                        <input type="number" class="form-control fw-bold text-center text-primary"
+                                        id="grade" placeholder="0.0" min="1" max="6" step="0.1" required
+                                        oninput="this.dataset.raw = this.value">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-7">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label fw-bold text-secondary text-uppercase small mb-0">Rundungswunsch</label>
+                                    </div>
+
+                                    <div class="border rounded p-2 bg-body-tertiary position-relative">
+                                        <a href="https://gemini.google.com" target="_blank" class="position-absolute top-0 end-0 m-2 text-decoration-none small fw-bold text-primary">
+                                            <i class="bi bi-robot"></i> KI Hilfe
+                                        </a>
+
+                                        <div class="form-check mt-1">
+                                            <input class="form-check-input" type="radio" name="rounding" id="roundNormal" value="normal" checked onclick="applyAutoRound()">
+                                            <label class="form-check-label" for="roundNormal">Mathematisch</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="rounding" id="roundUp" value="up" onclick="applyAutoRound()">
+                                            <label class="form-check-label text-success" for="roundUp"><i class="bi bi-arrow-up"></i> Aufrunden (0.5)</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="rounding" id="roundDown" value="down" onclick="applyAutoRound()">
+                                            <label class="form-check-label text-danger" for="roundDown"><i class="bi bi-arrow-down"></i> Abrunden (0.5)</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label text-secondary small">Bemerkung (Optional)</label>
+                                <textarea class="form-control" id="comment" rows="2" placeholder="Begründung..."></textarea>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg shadow-sm">Weiter zur Überprüfung <i class="bi bi-arrow-right"></i></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="d-flex justify-content-between align-items-end mb-2">
+                        <h4 class="fw-bold text-body mb-0">Letzte Anträge</h4>
+                        <a href="#" class="text-decoration-none small">Alle anzeigen</a>
+                    </div>
+                    <div class="card shadow-sm border-0 overflow-hidden">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col" class="ps-4">Zeit</th>
+                                        <th scope="col">Schüler & Modul</th>
+                                        <th scope="col" class="text-center">Note</th>
+                                        <th scope="col">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="ps-4 text-muted small">10:30</td>
+                                        <td><div class="fw-bold">Müller, Max (IN21a)</div><div class="small text-muted">M-117</div></td>
+                                        <td class="text-center fw-bold">5.5</td>
+                                        <td><span class="badge bg-success-subtle text-success border border-success">Genehmigt</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div>
 }
 else if (Role == "prorektor")
 {
-    <!-- PROREKTOR UI -->
+    <!-- ================== PROREKTOR UI ================== -->
     <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
@@ -46,14 +158,112 @@ else if (Role == "prorektor")
         </div>
     </nav>
 
-    <div class="container py-5">
-        @* ... Einfach den bestehenden Prorektor-Code kopieren ... *@
+    <div class="bg-white border-bottom shadow-sm sticky-top z-2">
+        <div class="container">
+            <ul class="nav nav-underline gap-3">
+                <li class="nav-item">
+                    <a class="nav-link @(activeTab == "pending" ? "active" : "") cursor-pointer" @onclick='() => activeTab = "pending"'>
+                        <i class="bi bi-inbox-fill text-primary"></i> Offen <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1 rounded-pill">2</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(activeTab == "approved" ? "active" : "") cursor-pointer" @onclick='() => activeTab = "approved"'>
+                        <i class="bi bi-check-circle-fill text-success"></i> Genehmigt
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(activeTab == "rejected" ? "active" : "") cursor-pointer" @onclick='() => activeTab = "rejected"'>
+                        <i class="bi bi-x-circle-fill text-danger"></i> Abgelehnt
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
+
+    <div class="container py-5">
+        @if (activeTab == "pending")
+        {
+            @* Pending requests *@
+            <div class="card shadow-sm border-0 mb-3 request-card">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                        <span class="text-muted small"><i class="bi bi-calendar3"></i> 04.12.2025</span>
+                        <span class="text-muted small"><i class="bi bi-clock"></i> 09:15 Uhr</span>
+                    </div>
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <span class="badge bg-primary me-2">M-117</span>
+                            <h4 class="fw-bold mb-1">Müller, Max <span class="text-muted fw-normal fs-6">(IN21a)</span></h4>
+                            <div class="text-muted small mb-3">Von: Herr K. Lehrer</div>
+                        </div>
+                        <div class="col-md-4 text-center border-start-md">
+                            <div class="grade-badge mb-3 bg-success-subtle text-success border border-success">5.5</div>
+                            <div class="d-flex gap-2 w-100 justify-content-center">
+                                <button class="btn btn-outline-danger flex-grow-1" @onclick='() => OpenModal("rejected")'>Ablehnen</button>
+                                <button class="btn btn-success flex-grow-1" @onclick='() => OpenModal("approved")'>Genehmigen</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (activeTab == "approved")
+        {
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8 opacity-75">
+                            <span class="badge bg-secondary me-2">M-320</span>
+                            <h4 class="fw-bold mb-1">Berger, Tim</h4>
+                        </div>
+                        <div class="col-md-4 text-center border-start-md">
+                            <div class="grade-badge mb-3 bg-light text-dark border">5.0</div>
+                            <div class="text-success fw-bold">Genehmigt</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (activeTab == "rejected")
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+                <h3 class="text-muted mt-3">Keine Anträge</h3>
+            </div>
+        }
+    </div>
+
+    @if (showModal)
+    {
+        <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header @(modalType == "approved" ? "bg-success" : "bg-danger") text-white">
+                        <h5 class="modal-title">Antrag @(modalType == "approved" ? "genehmigen" : "ablehnen")</h5>
+                        <button type="button" class="btn-close btn-close-white" @onclick="CloseModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Möchten Sie diese Aktion wirklich durchführen?</p>
+                        <textarea class="form-control" rows="3" placeholder="Begründung / Notiz..."></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-light" @onclick="CloseModal">Abbrechen</button>
+                        <button class="btn @(modalType == "approved" ? "btn-success" : "btn-danger")" @onclick="ConfirmAction">Bestätigen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 }
 
 @code {
     private string Role { get; set; } = string.Empty;
     private bool IsAccessDenied { get; set; } = false;
+
+    // UI Variablen für Prorektor
+    private string activeTab = "pending";
+    private bool showModal = false;
+    private string modalType = ""; // "approved" oder "rejected"
 
     protected override async Task OnInitializedAsync()
     {
@@ -136,5 +346,19 @@ else if (Role == "prorektor")
             case 3: return base64 + "=";
             default: return base64;
         }
+    }
+
+    // Prorektor Modal Funktionen
+    private void OpenModal(string type)
+    {
+        modalType = type;
+        showModal = true;
+    }
+
+    private void CloseModal() => showModal = false;
+
+    private void ConfirmAction()
+    {
+        showModal = false;
     }
 }
