@@ -26,7 +26,7 @@ public class JwtService
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.email),
-            new Claim("role", role)
+            new Claim(ClaimTypes.Role, role)
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));

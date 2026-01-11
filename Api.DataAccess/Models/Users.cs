@@ -25,4 +25,7 @@ public class Users
     public string? twofactor_code { get; set; }
     public DateTime? twofactor_expires { get; set; }
     public bool twofactor_verified { get; set; }
+
+    // Role
+    public string role { get; set; } = "teacher";
 }

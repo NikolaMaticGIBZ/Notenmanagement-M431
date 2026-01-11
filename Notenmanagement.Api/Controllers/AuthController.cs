@@ -3,6 +3,7 @@ using Api.Services.Interfaces;
 using Api.Services.Services;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
+using System.Data;
 using System.Security.Cryptography;
 
 namespace Notenmanagement.Api.Controllers;
@@ -90,13 +91,13 @@ public class AuthController : ControllerBase
         await _authRepository.SaveAsync();
 
         // JWT generieren
-        var token = _jwtService.GenerateToken(user, "teacher"); // Rolle aus DB später
+        var token = _jwtService.GenerateToken(user, user.role);
 
         return Ok(new
         {
             success = true,
             token,
-            role = "teacher"
+            role = user.role
         });
     }
 }

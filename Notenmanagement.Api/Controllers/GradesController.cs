@@ -1,12 +1,16 @@
 ﻿using Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Notenmanagement.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class GradesController : ControllerBase
 {
     private readonly IGradeService _gradesService;
@@ -18,10 +22,12 @@ public class GradesController : ControllerBase
 
     // CREATE a grade (teacher_id comes from logged-in user)
     [HttpPost]
+    [Authorize(Roles = "teacher")]
     public async Task<IActionResult> Create([FromBody] CreateGradeRequest request)
     {
-        // TODO: replace with actual logged-in user id from JWT
-        int teacherId = 1;
+        // TODO: replace with actual logged-in user id from JWT || Done!!
+        int teacherId = int.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
+        string role = User.FindFirstValue(ClaimTypes.Role)!;
 
         var result = await _gradesService.CreateGradeAsync(request, teacherId);
         return Ok(result);

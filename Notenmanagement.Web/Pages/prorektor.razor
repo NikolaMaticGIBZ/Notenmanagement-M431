@@ -1,5 +1,7 @@
 ﻿@page "/prorektor"
+@using Microsoft.AspNetCore.Authorization
 @inject NavigationManager NavManager
+@attribute [Authorize(Roles = "prorektor")]
 @inject IJSRuntime JS
 
 <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
@@ -14,6 +16,15 @@
     </div>
 </nav>
 
+@if (Role != "prorektor")
+{
+    <div class="alert alert-danger mt-5 text-center">
+        <h4><i class="bi bi-x-circle-fill"></i> Zugriff verweigert</h4>
+        <p>Sie haben keine Berechtigung, diese Seite zu sehen. Sie werden weitergeleitet...</p>
+    </div>
+}
+else
+{
 <div class="bg-white border-bottom shadow-sm sticky-top z-2">
     <div class="container">
         <ul class="nav nav-underline gap-3">
@@ -110,27 +121,31 @@
 </div>
 
 @if (showModal)
-{
-    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header @(modalType == "approved" ? "bg-success" : "bg-danger") text-white">
-                    <h5 class="modal-title">Antrag @(modalType == "approved" ? "genehmigen" : "ablehnen")</h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="CloseModal"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Möchten Sie diese Aktion wirklich durchführen?</p>
-                    <textarea class="form-control" rows="3" placeholder="Begründung / Notiz..."></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-light" @onclick="CloseModal">Abbrechen</button>
-                    <button class="btn @(modalType == "approved" ? "btn-success" : "btn-danger")" @onclick="ConfirmAction">Bestätigen</button>
+    {
+        <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header @(modalType == "approved" ? "bg-success" : "bg-danger") text-white">
+                        <h5 class="modal-title">Antrag @(modalType == "approved" ? "genehmigen" : "ablehnen")</h5>
+                        <button type="button" class="btn-close btn-close-white" @onclick="CloseModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Möchten Sie diese Aktion wirklich durchführen?</p>
+                        <textarea class="form-control" rows="3" placeholder="Begründung / Notiz..."></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-light" @onclick="CloseModal">Abbrechen</button>
+                        <button class="btn @(modalType == "approved" ? "btn-success" : "btn-danger")" @onclick="ConfirmAction">Bestätigen</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    }
 }
 @code {
+
+    private string Role { get; set; } = string.Empty;
+    private bool IsAccessDenied { get; set; } = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -149,7 +164,59 @@
             await JS.InvokeVoidAsync("localStorage.removeItem", "jwt");
             NavManager.NavigateTo("/");
         }
+
+        Role = GetRoleFromToken(token);
+
+        if (Role != "prorektor")
+        {
+            // Deny access
+            IsAccessDenied = true;
+            return;
+
+            // Redirect to /teacher after 5 seconds
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(5000);
+                NavManager.NavigateTo("/teacher");
+            });
+        }
     }
+
+    private string GetRoleFromToken(string token)
+    {
+        try
+        {
+            var parts = token.Split('.');
+            if (parts.Length != 3) return string.Empty;
+
+            var payload = parts[1];
+
+            // Convert Base64Url to Base64
+            payload = payload.Replace('-', '+').Replace('_', '/');
+            switch (payload.Length % 4)
+            {
+                case 2: payload += "=="; break;
+                case 3: payload += "="; break;
+            }
+
+            var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+            var doc = System.Text.Json.JsonDocument.Parse(json);
+
+            // Check for standard claims-based role
+            if (doc.RootElement.TryGetProperty("role", out var roleProp))
+                return roleProp.GetString()?.ToLower() ?? string.Empty;
+
+            if (doc.RootElement.TryGetProperty("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", out var claimRole))
+                return claimRole.GetString()?.ToLower() ?? string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+
+        return string.Empty;
+    }
+
 
     private bool IsTokenExpired(string token)
     {
@@ -166,6 +233,7 @@
 
     private string PadBase64(string base64)
     {
+        base64 = base64.Replace('-', '+').Replace('_', '/'); // Base64Url → Base64
         switch (base64.Length % 4)
         {
             case 2: return base64 + "==";
