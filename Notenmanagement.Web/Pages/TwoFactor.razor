@@ -74,6 +74,9 @@
 			NavManager.NavigateTo("/");
 			return;
 		}
+		var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+
+
 
 		if (!int.TryParse(userIdString, out int userId))
 		{
@@ -110,7 +113,7 @@
 				await JS.InvokeVoidAsync("sessionStorage.setItem", "userRole", result.Role);
 
 				if (result.Role == "prorektor" || result.Role == "teacher")
-					NavManager.NavigateTo("/overview");
+				NavManager.NavigateTo("/overview");
 			}
 			else
 			{

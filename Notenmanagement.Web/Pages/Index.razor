@@ -100,6 +100,14 @@
     private string Password { get; set; } = string.Empty;
     private string ErrorMessage { get; set; } = string.Empty;
 
+    protected override async Task OnInitializedAsync()
+    {
+        if (await AuthHelper.IsLoggedIn(JS))
+        {
+            NavManager.NavigateTo("/overview", true);
+        }
+    }
+
     private async Task HandleLogin()
     {
         ErrorMessage = string.Empty;
