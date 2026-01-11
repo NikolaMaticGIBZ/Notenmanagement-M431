@@ -1,4 +1,7 @@
 ﻿@page "/teacher"
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+
 
 <PageTitle>Teacher</PageTitle>
 
@@ -129,3 +132,47 @@
         </div>
     </div>
 </div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+
+        if (string.IsNullOrEmpty(token))
+        {
+            NavManager.NavigateTo("/");
+            return;
+        }
+
+        var isExpired = IsTokenExpired(token);
+        if (isExpired)
+        {
+            await JS.InvokeVoidAsync("localStorage.removeItem", "jwt");
+            NavManager.NavigateTo("/");
+        }
+    }
+
+    private bool IsTokenExpired(string token)
+    {
+        var parts = token.Split('.');
+        if (parts.Length != 3) return true; 
+
+        var payload = parts[1];
+        var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(PadBase64(payload)));
+        var expObj = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("exp").GetInt64();
+
+        var expDate = DateTimeOffset.FromUnixTimeSeconds(expObj);
+        return expDate < DateTimeOffset.UtcNow;
+    }
+
+    private string PadBase64(string base64)
+    {
+        switch (base64.Length % 4)
+        {
+            case 2: return base64 + "==";
+            case 3: return base64 + "=";
+            default: return base64;
+        }
+    }
+}

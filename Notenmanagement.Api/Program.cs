@@ -4,6 +4,8 @@ using Api.DataAccess.Repositories;
 using Api.Services.Interfaces;
 using Api.Services.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace Notenmanagement.Api;
 
@@ -43,9 +45,32 @@ public class Program
         builder.Services.AddScoped<IAuthRepository, AuthRepository>();
         builder.Services.AddScoped<IAuthService, AuthService>();
 
-
+        builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IGradesRepository, GradeRepository>();
         builder.Services.AddScoped<IGradeService, GradeService>();
+
+        builder.Services.AddSingleton<JwtService>();
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = "JwtBearer";
+            options.DefaultChallengeScheme = "JwtBearer";
+        })
+        .AddJwtBearer("JwtBearer", options =>
+        {
+            options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                ValidAudience = builder.Configuration["Jwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+            };
+        });
+
+        builder.Services.AddAuthorization();
 
 
         var app = builder.Build();

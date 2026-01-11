@@ -7,5 +7,7 @@ public interface IAuthRepository
 {
     Task<Users?> RegisterAsync(RegisterRequest request);
     Task<Users?> LoginAsync(LoginRequest request);
+    Task<Users?> GetByIdAsync(int id);
+    Task SaveAsync();
 
 }

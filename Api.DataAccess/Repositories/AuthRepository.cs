@@ -54,4 +54,13 @@ public class AuthRepository : IAuthRepository
             return null;
         return user;
     }
+    public async Task<Users?> GetByIdAsync(int id)
+    {
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.id == id);
+    }
+    public async Task SaveAsync()
+    {
+        await _context.SaveChangesAsync();
+    }
 }

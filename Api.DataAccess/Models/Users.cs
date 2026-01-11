@@ -20,4 +20,9 @@ public class Users
     public string password_hash { get; set; } = string.Empty;
 
     public ICollection<Grades> Grades { get; set; } = new List<Grades>();
+
+    // 2FA
+    public string? twofactor_code { get; set; }
+    public DateTime? twofactor_expires { get; set; }
+    public bool twofactor_verified { get; set; }
 }
