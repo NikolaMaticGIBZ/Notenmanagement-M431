@@ -29,7 +29,8 @@
                             <button type="submit" class="btn btn-primary btn-lg" disabled="@isLoading">
                                 @if (isLoading)
                                 {
-									<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true">Prüfen...</span>       
+									<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true">Prüfen...</span>
+                                    
                                 }
                                 else
                                 {
@@ -61,13 +62,26 @@
     private bool isLoading = false;
     private string Code { get; set; } = string.Empty;
     private string ErrorMessage { get; set; } = string.Empty;
+    private int UserId { get; set; } // UserId als int
 
-    [Parameter] public int UserId { get; set; }
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        if (UserId == 0)
-            NavManager.NavigateTo("/"); 
+        var requires2FA = await JS.InvokeAsync<string>("sessionStorage.getItem", "requires2FA");
+        var userIdString = await JS.InvokeAsync<string>("sessionStorage.getItem", "userId");
+
+        if (string.IsNullOrEmpty(requires2FA) || string.IsNullOrEmpty(userIdString))
+        {
+            NavManager.NavigateTo("/");
+            return;
+        }
+
+        if (!int.TryParse(userIdString, out int userId))
+        {
+            NavManager.NavigateTo("/");
+            return;
+        }
+
+        UserId = userId;
     }
 
     private async Task VerifyCode()
@@ -89,10 +103,11 @@
             {
                 var result = await response.Content.ReadFromJsonAsync<Verify2FAResponse>();
 
-               
                 await JS.InvokeVoidAsync("localStorage.setItem", "jwt", result.Token);
 
-         
+                await JS.InvokeVoidAsync("sessionStorage.removeItem", "requires2FA");
+                await JS.InvokeVoidAsync("sessionStorage.removeItem", "userId");
+
                 if (result.Role == "prorektor")
                     NavManager.NavigateTo("/prorektor");
                 else
@@ -115,7 +130,7 @@
 
     private Task ResendCode()
     {
-   
+        
         return Task.CompletedTask;
     }
 
