@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using Shared.DTOs
 @inject HttpClient Http
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
@@ -114,31 +115,36 @@
         {
             var response = await Http.PostAsJsonAsync("api/auth/login", request);
 
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+                ErrorMessage = await response.Content.ReadAsStringAsync();
+                return;
+            }
 
-                // Temporäres 2FA-Flag setzen
+            var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+
+            if (result is null)
+            {
+                ErrorMessage = "Login fehlgeschlagen";
+                return;
+            }
+
+            if (result.RequiresTwoFactor)
+            {
                 await JS.InvokeVoidAsync("sessionStorage.setItem", "requires2FA", "true");
+                await JS.InvokeVoidAsync("sessionStorage.setItem", "role", result.Role);
                 await JS.InvokeVoidAsync("sessionStorage.setItem", "userId", result.UserId.ToString());
 
-                // Weiterleiten zur 2FA-Seite
                 NavManager.NavigateTo("/twofactor");
             }
             else
             {
-                ErrorMessage = await response.Content.ReadAsStringAsync();
+                NavManager.NavigateTo("/overview");
             }
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
         }
-    }
-
-    public class LoginResponse
-    {
-        public int UserId { get; set; }
-        public bool RequiresTwoFactor { get; set; }
     }
 }

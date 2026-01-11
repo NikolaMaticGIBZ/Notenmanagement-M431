@@ -1,0 +1,81 @@
+﻿@using Shared.DTOs
+@inject HttpClient Http
+
+<h3>Neue Note erfassen</h3>
+
+<select class="form-select mb-3" @bind="SelectedRektorId">
+    <option value="">Rektor wählen</option>
+    @foreach (var r in Rektoren)
+    {
+        <option value="@r.Id">@r.Name</option>
+    }
+</select>
+
+<div class="mb-3">
+    <label>Schülername</label>
+    <input class="form-control" @bind="StudentName" />
+</div>
+
+<div class="mb-3">
+    <label>Modul</label>
+    <input class="form-control" @bind="CourseName" />
+</div>
+
+<div class="mb-3">
+    <label>Note</label>
+    <input type="number" class="form-control" @bind="GradeValue" step="0.1" min="1" max="6" />
+</div>
+
+<button class="btn btn-primary" @onclick="Submit">Senden</button>
+
+<h3 class="mt-5">Letzte Anträge</h3>
+@if (Grades == null)
+{
+    <p>Lade…</p>
+}
+else
+{
+    foreach (var g in Grades)
+    {
+        <div class="card mb-2">
+            <div class="card-body">
+                <strong>@g.StudentName</strong> – @g.CourseName – @g.GradeValue
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private int SelectedRektorId;
+    private List<RektorDto> Rektoren = new();
+    private string StudentName = "";
+    private string CourseName = "";
+    private decimal GradeValue = 0;
+    private List<GradeResponse>? Grades;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Rektoren = await Http.GetFromJsonAsync<List<RektorDto>>("api/rektor");
+        Grades = await Http.GetFromJsonAsync<List<GradeResponse>>("api/grades/my");
+    }
+
+    private async Task Submit()
+    {
+        var request = new CreateGradeRequest
+        {
+            CourseName = CourseName,
+            GradeValue = GradeValue,
+            StudentName = StudentName,
+            RektorId = SelectedRektorId
+        };
+
+        await Http.PostAsJsonAsync("api/grades", request);
+        Grades = await Http.GetFromJsonAsync<List<GradeResponse>>("api/grades/my"); // aktualisieren
+    }
+
+    class RektorDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+    }
+}

@@ -43,6 +43,16 @@ public class AuthController : ControllerBase
         if (user == null)
             return Unauthorized("Invalid credentials");
 
+        string _role;
+        try
+        {
+            _role = DetermineRole(user.email);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+
         var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
 
         user.twofactor_code = code;
@@ -63,8 +73,18 @@ public class AuthController : ControllerBase
         return Ok(new
         {
             requiresTwoFactor = true,
-            userId = user.id
+            userId = user.id,
+            role = _role
         });
+    }
+    private string DetermineRole(string email)
+    {
+        if (email.EndsWith("@gmail.ch", StringComparison.OrdinalIgnoreCase))
+            return "teacher";
+        if (email.EndsWith("@zg.ch", StringComparison.OrdinalIgnoreCase))
+            return "prorektor";
+
+        throw new Exception("Ungültige E-Mail-Domain. Registrierung nicht erlaubt.");
     }
 
     [HttpPost("verify-2fa")]

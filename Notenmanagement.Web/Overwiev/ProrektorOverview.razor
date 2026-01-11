@@ -1,0 +1,42 @@
+﻿@using Shared.DTOs
+@inject HttpClient Http
+
+<div class="mb-3">
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link @(activeTab == "pending" ? "active" : "")" @onclick="() => activeTab =" pending"">Offen</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(activeTab == "approved" ? "active" : "")" @onclick="() => activeTab =" approved"">Genehmigt</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(activeTab == "rejected" ? "active" : "")" @onclick="() => activeTab =" rejected"">Abgelehnt</a>
+        </li>
+    </ul>
+</div>
+
+@if (Grades == null)
+{
+    <p>Lade…</p>
+}
+else
+{
+    var filtered = Grades.Where(g => activeTab == "pending" ? !g.IsApproved.HasValue : activeTab == "approved" ? g.IsApproved == true : g.IsApproved == false);
+
+    foreach (var g in filtered)
+    {
+        <div class="card mb-2 p-3">
+            <strong>@g.StudentName</strong> – @g.CourseName – @g.GradeValue
+        </div>
+    }
+}
+
+@code {
+    private List<GradeResponse>? Grades;
+    private string activeTab = "pending";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Grades = await Http.GetFromJsonAsync<List<GradeResponse>>("api/grades");
+    }
+}

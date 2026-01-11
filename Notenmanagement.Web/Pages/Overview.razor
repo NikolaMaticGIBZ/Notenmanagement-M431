@@ -1,0 +1,57 @@
+﻿@page "/overview"
+@using System.Text
+@using System.Text.Json
+@using Notenmanagement.Web.Overwiev
+@inject IJSRuntime JS
+@inject NavigationManager NavManager
+
+<PageTitle>Übersicht</PageTitle>
+<nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <img src="https://www.edu.ch/media/wysiwyg/edu/schulen/gibz.png?v=1" alt="GIBZ Logo" height="40">
+        </a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+            </ul>
+        </div>
+    </div>
+</nav>
+@if (role == null)
+{
+    <p>Lade…</p>
+}
+else if (role == "teacher")
+{
+    <TeacherOverview />
+}
+else if (role == "prorektor")
+{
+    <ProrektorOverview />
+}
+else
+{
+    <p>Keine Berechtigung</p>
+}
+@code {
+    private string? role;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+
+        var _role = await JS.InvokeAsync<string>("sessionStorage.getItem", "role");
+        if (_role == "teacher")
+            role = "teacher";
+        else if (role == "prorektor")
+            role = "prorektor";
+
+
+        if (string.IsNullOrEmpty(token))
+        {
+            NavManager.NavigateTo("/");
+            return;
+        }
+    }
+}

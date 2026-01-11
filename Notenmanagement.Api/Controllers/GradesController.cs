@@ -1,7 +1,9 @@
 ﻿using Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
+using System.Security.Claims;
 
 namespace Notenmanagement.Api.Controllers;
 
@@ -25,6 +27,14 @@ public class GradesController : ControllerBase
 
         var result = await _gradesService.CreateGradeAsync(request, teacherId);
         return Ok(result);
+    }
+    [Authorize(Roles = "prorektor")]
+    [HttpGet("my")]
+    public async Task<IActionResult> GetForRektor()
+    {
+        var rektorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var grades = await _gradesService.GetForRektorAsync(rektorId);
+        return Ok(grades);
     }
 
     // GET all grades

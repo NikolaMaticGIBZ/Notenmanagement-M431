@@ -37,6 +37,19 @@ public class GradeService : IGradeService
             RektorName = created.rektor?.name ?? string.Empty
         };
     }
+    public async Task<IEnumerable<GradeResponse>> GetForRektorAsync(int rektorId)
+    {
+        var grades = await _gradesRepo.GetByRektorIdAsync(rektorId);
+
+        return grades.Select(g => new GradeResponse
+        {
+            Id = g.id,
+            CourseName = g.course_name,
+            GradeValue = g.grade_value,
+            StudentName = g.student_name,
+            TeacherName = g.teacher.username
+        });
+    }
 
     public async Task<IEnumerable<GradeResponse>> GetAllGradesAsync()
     {

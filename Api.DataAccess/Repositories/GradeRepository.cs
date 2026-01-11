@@ -1,6 +1,7 @@
 ﻿using Api.DataAccess.Interfaces;
 using Api.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 
 namespace Api.DataAccess.Repositories;
@@ -49,5 +50,12 @@ public class GradeRepository : IGradesRepository
         if (grade == null) return false;
         _context.Grades.Remove(grade);
         return await _context.SaveChangesAsync() > 0;
+    }
+    public async Task<IEnumerable<Grades>> GetByRektorIdAsync(int rektorId)
+    {
+        return await _context.Grades
+            .Include(g => g.teacher)
+            .Where(g => g.rektor_id == rektorId)
+            .ToListAsync();
     }
 }
