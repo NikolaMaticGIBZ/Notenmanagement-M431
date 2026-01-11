@@ -22,7 +22,9 @@ else if (Role == "teacher")
             </a>
             <div class="d-flex align-items-center ms-auto gap-2">
                 <div class="vr mx-2"></div>
-                <a href="/index.html" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right"></i> Logout</a>
+                <button class="btn btn-outline-danger btn-sm" @onclick="Logout">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
             </div>
         </div>
     </nav>
@@ -366,6 +368,7 @@ else if (Role == "prorektor")
     private async Task Logout()
     {
         await JS.InvokeVoidAsync("localStorage.removeItem", "jwt");
+        await JS.InvokeVoidAsync("sessionStorage.clear");
         NavManager.NavigateTo("/", true);
     }
 }
