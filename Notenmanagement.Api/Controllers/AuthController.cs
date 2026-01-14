@@ -26,6 +26,21 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
+        var email = request.Email.ToLower().Trim();
+        string role = string.Empty;
+
+        if (email.EndsWith("@gibz.ch"))
+        {
+            role = "teacher";
+        }
+        else if (email.EndsWith("@zg.ch"))
+        {
+            role = "rektor";
+        }
+        else
+        {
+            return BadRequest("Nur E-Mail-Adressen mit @gibz.ch oder @zg.ch sind erlaubt.");
+        }
         var user = await _authRepository.RegisterAsync(request);
         if (user == null)
             return BadRequest("User already exists");
@@ -34,7 +49,8 @@ public class AuthController : ControllerBase
         {
             user.id,
             user.username,
-            user.email
+            user.email,
+            user.role
         });
     }
     [HttpPost("login")]

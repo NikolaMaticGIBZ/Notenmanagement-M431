@@ -127,6 +127,14 @@
     {
         ErrorMessage = string.Empty;
 
+        var email = Email.ToLower().Trim();
+
+        if (!email.EndsWith("@gibz.ch") && !email.EndsWith("@zg.ch"))
+        {
+            ErrorMessage = "Bitte verwenden Sie eine gültige Email-Adresse.";
+            return;
+        }
+
         var request = new Shared.DTOs.RegisterRequest
         {
             Username = Username,
