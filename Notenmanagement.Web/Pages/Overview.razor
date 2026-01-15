@@ -1,10 +1,10 @@
 ﻿@page "/overview"
 @using Microsoft.AspNetCore.Authorization
 @using Shared.DTOs
-@using static System.Net.WebRequestMethods
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
 @inject HttpClient Http
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>Noten Manager Übersicht</PageTitle>
 
@@ -17,8 +17,8 @@
 }
 else if (Role == "teacher")
 {
-    <!-- ================== TEACHER UI ================== -->
-    <nav class="navbar navbar-expand-lg border-bottom shadow-sm sticky-top bg-body-tertiary">
+    <!-- ================== TEACHER HEADER ================== -->
+    <nav class="navbar navbar-expand-lg border-bottom shadow-sm sticky-navbar">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
                 <img src="https://www.edu.ch/media/wysiwyg/edu/schulen/gibz.png?v=1" alt="GIBZ Logo" height="40">
@@ -32,10 +32,9 @@ else if (Role == "teacher")
         </div>
     </nav>
 
-    <div class="container py-5">
+    <div class="container content-padding">
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-7">
-
                 <div id="success-alert" class="alert alert-success d-none shadow-sm" role="alert">
                     <h4 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Gesendet!</h4>
                     <p>Der Notenantrag wurde erfolgreich an das Prorektorat übermittelt.</p>
@@ -46,122 +45,88 @@ else if (Role == "teacher")
                         <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Neue Note erfassen</h5>
                     </div>
                     <div class="card-body p-4">
-                        <form id="gradeForm" onsubmit="event.preventDefault(); showConfirmModal();">
-
+                        <EditForm Model="@gradeForm" OnValidSubmit="@ConfirmAction">
+                            <DataAnnotationsValidator />
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-secondary text-uppercase small">1. Modul</label>
-                                <input type="text" class="form-control form-control-lg" id="module" placeholder="z.B. M-117 oder ABU" required>
+                                <InputText class="form-control form-control-lg" @bind-Value="gradeForm.ModuleName" />
+                                <ValidationMessage For="@(() => gradeForm.ModuleName)" />
                             </div>
 
                             <div class="row">
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label fw-bold text-secondary text-uppercase small">2. Klasse</label>
-                                    <input type="text" class="form-control" id="studentClass" placeholder="z.B. IN21a" required>
+                                    <InputText class="form-control" @bind-Value="gradeForm.CourseName" />
+                                    <ValidationMessage For="@(() => gradeForm.CourseName)" />
                                 </div>
-
                                 <div class="col-md-8 mb-3">
                                     <label class="form-label fw-bold text-secondary text-uppercase small">3. Schüler Name</label>
-                                    <input type="text" class="form-control" id="student" placeholder="Vorname Nachname" required>
+                                    <InputText class="form-control" @bind-Value="gradeForm.StudentName" />
+                                    <ValidationMessage For="@(() => gradeForm.StudentName)" />
                                 </div>
                             </div>
-
-                            <hr class="my-4">
 
                             <div class="row mb-3">
                                 <div class="col-md-5">
-                                    <label class="form-label fw-bold text-secondary text-uppercase small">Note (Eingabe)</label>
-                                    <div class="input-group input-group-lg">
-                                        <input type="number" class="form-control fw-bold text-center text-primary"
-                                        id="grade" placeholder="0.0" min="1" max="6" step="0.1" required
-                                        oninput="this.dataset.raw = this.value">
-                                    </div>
+                                    <label class="form-label fw-bold text-secondary text-uppercase small">Note (1.0 - 6.0)</label>
+                                    <InputNumber class="form-control fw-bold text-center text-primary" @bind-Value="gradeForm.GradeValue" Min="1" Max="6" Step="0.1" />
+                                    <ValidationMessage For="@(() => gradeForm.GradeValue)" />
+                                    <small class="text-muted">Gerundet: @RoundedGrade</small>
                                 </div>
 
                                 <div class="col-md-7">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <label class="form-label fw-bold text-secondary text-uppercase small mb-0">Rundungswunsch</label>
-                                    </div>
-
+                                    <label class="form-label fw-bold text-secondary text-uppercase small mb-0">Rundungswunsch</label>
                                     <div class="border rounded p-2 bg-body-tertiary position-relative">
-                                        <a href="https://gemini.google.com" target="_blank" class="position-absolute top-0 end-0 m-2 text-decoration-none small fw-bold text-primary">
+                                        <button type="button" class="btn btn-sm btn-link position-absolute top-0 end-0 m-2 text-decoration-none" @onclick="OpenAIHelper">
                                             <i class="bi bi-robot"></i> KI Hilfe
-                                        </a>
-
+                                        </button>
                                         <div class="form-check mt-1">
-                                            <input class="form-check-input" type="radio" name="rounding" id="roundNormal" value="normal" checked onclick="applyAutoRound()">
+                                            <input class="form-check-input" type="radio" name="rounding" id="roundNormal" checked="@IsSelected("normal")" @onchange="() => SetRounding(normal)" />
                                             <label class="form-check-label" for="roundNormal">Mathematisch</label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="rounding" id="roundUp" value="up" onclick="applyAutoRound()">
-                                            <label class="form-check-label text-success" for="roundUp"><i class="bi bi-arrow-up"></i> Aufrunden (0.5)</label>
+                                            <input class="form-check-input" type="radio" name="rounding" id="roundUp" checked="@IsSelected("up")" @onchange="() => SetRounding(up)" />
+                                            <label class="form-check-label text-success" for="roundUp">Aufrunden (0.5)</label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="rounding" id="roundDown" value="down" onclick="applyAutoRound()">
-                                            <label class="form-check-label text-danger" for="roundDown"><i class="bi bi-arrow-down"></i> Abrunden (0.5)</label>
+                                            <input class="form-check-input" type="radio" name="rounding" id="roundDown" checked="@IsSelected("down")" @onchange="() => SetRounding(down)" />
+                                            <label class="form-check-label text-danger" for="roundDown">Abrunden (0.5)</label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-secondary text-uppercase small">Rektor</label>
-                                <select class="form-select form-select-lg" @bind="SelectedRektorId" required>
+                                <InputSelect class="form-select form-select-lg" @bind-Value="gradeForm.RektorId">
                                     <option value="">-- Wählen Sie einen Rektor --</option>
                                     @foreach (var rektor in Rektoren)
                                     {
                                         <option value="@rektor.Id">@rektor.Name</option>
                                     }
-                                </select>
+                                </InputSelect>
+                                <span class="text-danger">@RektorValidationMessage</span>
                             </div>
 
                             <div class="mb-4">
                                 <label class="form-label text-secondary small">Bemerkung (Optional)</label>
-                                <textarea class="form-control" id="comment" rows="2" placeholder="Begründung..."></textarea>
+                                <InputTextArea class="form-control" @bind-Value="gradeForm.Comment" rows="2" placeholder="Begründung..." />
                             </div>
 
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg shadow-sm">Weiter zur Überprüfung <i class="bi bi-arrow-right"></i></button>
+                                <button type="submit" class="btn btn-primary btn-lg shadow-sm"> Weiter zur Überprüfung <i class="bi bi-arrow-right"></i> </button>
                             </div>
-                        </form>
+                        </EditForm>
                     </div>
                 </div>
-
-                <div>
-                    <div class="d-flex justify-content-between align-items-end mb-2">
-                        <h4 class="fw-bold text-body mb-0">Letzte Anträge</h4>
-                        <a href="#" class="text-decoration-none small">Alle anzeigen</a>
-                    </div>
-                    <div class="card shadow-sm border-0 overflow-hidden">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0 align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th scope="col" class="ps-4">Zeit</th>
-                                        <th scope="col">Schüler & Modul</th>
-                                        <th scope="col" class="text-center">Note</th>
-                                        <th scope="col">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="ps-4 text-muted small">10:30</td>
-                                        <td><div class="fw-bold">Müller, Max (IN21a)</div><div class="small text-muted">M-117</div></td>
-                                        <td class="text-center fw-bold">5.5</td>
-                                        <td><span class="badge bg-success-subtle text-success border border-success">Genehmigt</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
     </div>
 }
 else if (Role == "prorektor")
 {
-    <!-- ================== PROREKTOR UI ================== -->
-    <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
+    <!-- ================== PROREKTOR HEADER ================== -->
+    <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm sticky-navbar">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
                 <img src="https://www.edu.ch/media/wysiwyg/edu/schulen/gibz.png?v=1" alt="GIBZ Logo" height="40">
@@ -175,12 +140,13 @@ else if (Role == "prorektor")
         </div>
     </nav>
 
-    <div class="bg-white border-bottom shadow-sm sticky-top z-2">
+    <div class="bg-white border-bottom shadow-sm sticky-navbar" style="top: 56px;">
         <div class="container">
             <ul class="nav nav-underline gap-3">
                 <li class="nav-item">
                     <a class="nav-link @(activeTab == "pending" ? "active" : "") cursor-pointer" @onclick='() => activeTab = "pending"'>
-                        <i class="bi bi-inbox-fill text-primary"></i> Offen <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1 rounded-pill">2</span>
+                        <i class="bi bi-inbox-fill text-primary"></i> Offen
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1 rounded-pill">2</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -197,10 +163,10 @@ else if (Role == "prorektor")
         </div>
     </div>
 
-    <div class="container py-5">
+    <div class="container content-padding" style="padding-top: 120px;">
+        @* Prorektor Content bleibt unverändert *@
         @if (activeTab == "pending")
         {
-            @* Pending requests *@
             <div class="card shadow-sm border-0 mb-3 request-card">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
@@ -248,60 +214,64 @@ else if (Role == "prorektor")
                 <h3 class="text-muted mt-3">Keine Anträge</h3>
             </div>
         }
-    </div>
 
-    @if (showModal)
-    {
-        <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header @(modalType == "approved" ? "bg-success" : "bg-danger") text-white">
-                        <h5 class="modal-title">Antrag @(modalType == "approved" ? "genehmigen" : "ablehnen")</h5>
-                        <button type="button" class="btn-close btn-close-white" @onclick="CloseModal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Möchten Sie diese Aktion wirklich durchführen?</p>
-                        <textarea class="form-control" rows="3" placeholder="Begründung / Notiz..."></textarea>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-light" @onclick="CloseModal">Abbrechen</button>
-                        <button class="btn @(modalType == "approved" ? "btn-success" : "btn-danger")" @onclick="ConfirmAction">Bestätigen</button>
+        @if (showModal)
+        {
+            <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header @(modalType == "approved" ? "bg-success" : "bg-danger") text-white">
+                            <h5 class="modal-title">Antrag @(modalType == "approved" ? "genehmigen" : "ablehnen")</h5>
+                            <button type="button" class="btn-close btn-close-white" @onclick="CloseModal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Möchten Sie diese Aktion wirklich durchführen?</p>
+                            <textarea class="form-control" rows="3" placeholder="Begründung / Notiz..."></textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-light" @onclick="CloseModal">Abbrechen</button>
+                            <button class="btn @(modalType == "approved" ? "btn-success" : "btn-danger")" @onclick="ConfirmProrektorAction">Bestätigen</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    }
+        }
+    </div>
 }
 
 @code {
+    private const string up = "up";
+    private const string down = "down";
+    private const string normal = "normal";
     private string Role { get; set; } = string.Empty;
     private bool IsAccessDenied { get; set; } = false;
-
-    // UI Variablen für Prorektor
+    private List<(int Id, string Name)> Rektoren = new() { (1, "Regula Tobler"), (2, "Werner Odermmtt"), (3, "Patrick Zeiger"), (4, "Alex Kobel") };
+    private GradeFormModel gradeForm = new();
+    private string RoundingOption { get; set; } = normal;
+    private string RektorValidationMessage { get; set; } = string.Empty;
     private string activeTab = "pending";
     private bool showModal = false;
-    private string modalType = ""; // "approved" oder "rejected"
+    private string modalType = "";
 
-    private int SelectedRektorId { get; set; } = 0;
-    private List<(int Id, string Name)> Rektoren = new()
+    private void SetRounding(string option) => RoundingOption = option;
+    private bool IsSelected(string option) => RoundingOption == option;
+    private decimal RoundedGrade => ApplyRounding(gradeForm.GradeValue, RoundingOption);
+
+    private decimal ApplyRounding(decimal grade, string rounding)
     {
-        (1, "Regula Tobler"),
-        (2, "Werner Odermmtt"),
-        (3, "Patrick Zeiger"),
-        (4, "Alex Kobel")
-    };
+        grade = Math.Clamp(grade, 1m, 6m);
+        return rounding switch
+        {
+            "up" => Math.Ceiling(grade * 2) / 2,
+            "down" => Math.Floor(grade * 2) / 2,
+            _ => Math.Round(grade * 2, MidpointRounding.AwayFromZero) / 2
+        };
+    }
 
     protected override async Task OnInitializedAsync()
     {
         var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
-
-        if (string.IsNullOrEmpty(token))
-        {
-            NavManager.NavigateTo("/");
-            return;
-        }
-
-        if (IsTokenExpired(token))
+        if (string.IsNullOrEmpty(token) || IsTokenExpired(token))
         {
             await JS.InvokeVoidAsync("localStorage.removeItem", "jwt");
             NavManager.NavigateTo("/");
@@ -309,119 +279,33 @@ else if (Role == "prorektor")
         }
 
         Role = GetRoleFromToken(token);
-
-        if (Role != "teacher" && Role != "prorektor")
-        {
-            IsAccessDenied = true;
-        }
+        if (Role != "teacher" && Role != "prorektor") IsAccessDenied = true;
     }
-
-    private string GetRoleFromToken(string token)
-    {
-        try
-        {
-            var parts = token.Split('.');
-            if (parts.Length != 3) return string.Empty;
-
-            var payload = parts[1].Replace('-', '+').Replace('_', '/');
-            switch (payload.Length % 4)
-            {
-                case 2: payload += "=="; break;
-                case 3: payload += "="; break;
-            }
-
-            var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
-            var doc = System.Text.Json.JsonDocument.Parse(json);
-
-            if (doc.RootElement.TryGetProperty("role", out var roleProp))
-                return roleProp.GetString()?.ToLower() ?? string.Empty;
-
-            if (doc.RootElement.TryGetProperty("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", out var claimRole))
-                return claimRole.GetString()?.ToLower() ?? string.Empty;
-        }
-        catch { return string.Empty; }
-
-        return string.Empty;
-    }
-
-    private bool IsTokenExpired(string token)
-    {
-        try
-        {
-            var parts = token.Split('.');
-            if (parts.Length != 3) return true;
-
-            var payload = PadBase64(parts[1]);
-            var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
-            var exp = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("exp").GetInt64();
-
-            return DateTimeOffset.FromUnixTimeSeconds(exp) < DateTimeOffset.UtcNow;
-        }
-        catch
-        {
-            return true;
-        }
-    }
-
-    private string PadBase64(string base64)
-    {
-        base64 = base64.Replace('-', '+').Replace('_', '/');
-        switch (base64.Length % 4)
-        {
-            case 2: return base64 + "==";
-            case 3: return base64 + "=";
-            default: return base64;
-        }
-    }
-
-    // Prorektor Modal Funktionen
-    private void OpenModal(string type)
-    {
-        modalType = type;
-        showModal = true;
-    }
-
-    private void CloseModal() => showModal = false;
 
     private async Task ConfirmAction()
     {
-        showModal = false;
+        RektorValidationMessage = string.Empty;
+        if (gradeForm.RektorId == 0) { RektorValidationMessage = "Bitte einen Rektor auswählen."; return; }
 
         try
         {
-            // Get values directly from DOM
-            var module = await JS.InvokeAsync<string>("eval", "document.getElementById('module').value");
-            var studentClass = await JS.InvokeAsync<string>("eval", "document.getElementById('studentClass').value");
-            var studentName = await JS.InvokeAsync<string>("eval", "document.getElementById('student').value");
-            var gradeStr = await JS.InvokeAsync<string>("eval", "document.getElementById('grade').value");
-            var comment = await JS.InvokeAsync<string>("eval", "document.getElementById('comment').value");
-
-            decimal gradeValue = decimal.TryParse(gradeStr, out var g) ? g : 0;
+            var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+            if (string.IsNullOrEmpty(token)) { await JS.InvokeVoidAsync("alert", "Sie sind nicht eingeloggt."); return; }
 
             var request = new CreateGradeRequest
             {
-                ModuleName = module,
-                CourseName = studentClass,
-                StudentName = studentName,
-                GradeValue = gradeValue,
-                RektorId = SelectedRektorId,
+                ModuleName = gradeForm.ModuleName,
+                CourseName = gradeForm.CourseName,
+                StudentName = gradeForm.StudentName,
+                GradeValue = RoundedGrade,
+                RektorId = gradeForm.RektorId,
             };
 
-            // Get JWT
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
-            if (string.IsNullOrEmpty(token))
-            {
-                await JS.InvokeVoidAsync("alert", "Sie sind nicht eingeloggt.");
-                return;
-            }
-
-            // Send HTTP request
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/grades")
             {
                 Content = JsonContent.Create(request)
             };
             httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
             var response = await Http.SendAsync(httpRequest);
 
             if (response.IsSuccessStatusCode)
@@ -440,6 +324,25 @@ else if (Role == "prorektor")
         }
     }
 
+    private void OpenAIHelper()
+    {
+        if (string.IsNullOrWhiteSpace(gradeForm.StudentName) || string.IsNullOrWhiteSpace(gradeForm.ModuleName) || string.IsNullOrWhiteSpace(gradeForm.CourseName))
+        {
+            JS.InvokeVoidAsync("alert", "Bitte zuerst Schüler, Modul und Klasse ausfüllen.");
+            return;
+        }
+
+        var prompt = $"Ich bin Lehrer an der Berufsschule GIBZ Kanton Zug.\n" +
+                     $"Ich möchte für meinen Schüler {gradeForm.StudentName} in der Klasse {gradeForm.CourseName} " +
+                     $"im Modul {gradeForm.ModuleName} eine Note von {gradeForm.GradeValue} eingeben.\n\n" +
+                     "Bitte analysiere professionell, ob die Note mathematisch gerundet, auf- oder abgerundet werden sollte, " +
+                     "unter Berücksichtigung der üblichen schulischen Bewertungsrichtlinien.\n" +
+                     "Gib eine klare Empfehlung (Aufrunden/Abrunden/Mathematisch) und eine kurze Begründung.\n\n" +
+                     "Antworte so, dass ein Lehrer direkt entscheiden kann.";
+
+        var chatUrl = $"https://chat.openai.com/?prompt={Uri.EscapeDataString(prompt)}";
+        JS.InvokeVoidAsync("window.open", chatUrl, "_blank");
+    }
 
     private async Task Logout()
     {
@@ -447,4 +350,83 @@ else if (Role == "prorektor")
         await JS.InvokeVoidAsync("sessionStorage.clear");
         NavManager.NavigateTo("/", true);
     }
+
+    private string GetRoleFromToken(string token)
+    {
+        try
+        {
+            var parts = token.Split('.');
+            if (parts.Length != 3) return string.Empty;
+            var payload = parts[1].Replace('-', '+').Replace('_', '/');
+            while (payload.Length % 4 != 0) payload += "=";
+            var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+            var doc = System.Text.Json.JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("role", out var roleProp)) return roleProp.GetString()?.ToLower() ?? string.Empty;
+            if (doc.RootElement.TryGetProperty("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", out var claimRole)) return claimRole.GetString()?.ToLower() ?? string.Empty;
+        }
+        catch { }
+        return string.Empty;
+    }
+
+    private bool IsTokenExpired(string token)
+    {
+        try
+        {
+            var parts = token.Split('.');
+            if (parts.Length != 3) return true;
+            var payload = parts[1].Replace('-', '+').Replace('_', '/');
+            while (payload.Length % 4 != 0) payload += "=";
+            var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+            var exp = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("exp").GetInt64();
+            return DateTimeOffset.FromUnixTimeSeconds(exp) < DateTimeOffset.UtcNow;
+        }
+        catch { return true; }
+    }
+
+    public class GradeFormModel
+    {
+        [Required(ErrorMessage = "Modul ist erforderlich.")]
+        public string ModuleName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Klasse ist erforderlich.")]
+        public string CourseName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Schülername ist erforderlich.")]
+        public string StudentName { get; set; } = string.Empty;
+
+        [Range(1, 6, ErrorMessage = "Die Note muss zwischen 1.0 und 6.0 liegen.")]
+        public decimal GradeValue { get; set; } = 1m;
+
+        [Required(ErrorMessage = "Bitte einen Rektor auswählen.")]
+        public int RektorId { get; set; }
+
+        public string Comment { get; set; } = string.Empty;
+    }
+
+    private void OpenModal(string type)
+    {
+        modalType = type;
+        showModal = true;
+    }
+
+    private void CloseModal() => showModal = false;
+
+    private async Task ConfirmProrektorAction()
+    {
+        showModal = false;
+        await JS.InvokeVoidAsync("alert", $"Prorektor Aktion: {modalType} bestätigt.");
+    }
 }
+
+<style>
+    .sticky-navbar {
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+        background-color: var(--bs-body-bg);
+    }
+
+    .content-padding {
+        padding-top: 100px; /* Dynamische Höhe für Header + Tabs */
+    }
+</style>
