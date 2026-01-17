@@ -144,20 +144,20 @@ else if (Role == "prorektor")
         <div class="container">
             <ul class="nav nav-underline gap-3">
                 <li class="nav-item">
-                    <a class="nav-link @(activeTab == "pending" ? "active" : "") cursor-pointer" @onclick='() => activeTab = "pending"'>
+                    <button class="btn nav-link @(activeTab == "pending" ? "active" : "") cursor-pointer" @onclick='() => activeTab = "pending"'>
                         <i class="bi bi-inbox-fill text-primary"></i> Offen
                         <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1 rounded-pill">2</span>
-                    </a>
+                    </button>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(activeTab == "approved" ? "active" : "") cursor-pointer" @onclick='() => activeTab = "approved"'>
+                    <button class="btn nav-link @(activeTab == "approved" ? "active" : "") cursor-pointer" @onclick='() => activeTab = "approved"'>
                         <i class="bi bi-check-circle-fill text-success"></i> Genehmigt
-                    </a>
+                    </button>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(activeTab == "rejected" ? "active" : "") cursor-pointer" @onclick='() => activeTab = "rejected"'>
+                    <button class="btn nav-link @(activeTab == "rejected" ? "active" : "") cursor-pointer" @onclick='() => activeTab = "rejected"'>
                         <i class="bi bi-x-circle-fill text-danger"></i> Abgelehnt
-                    </a>
+                    </button>
                 </li>
             </ul>
         </div>
