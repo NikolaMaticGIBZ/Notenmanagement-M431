@@ -24,6 +24,23 @@ else if (Role == "teacher")
                 <img src="https://www.edu.ch/media/wysiwyg/edu/schulen/gibz.png?v=1" alt="GIBZ Logo" height="40">
             </a>
             <div class="d-flex align-items-center ms-auto gap-2">
+                <div class="dropdown">
+                    <button class="btn dropdown-toggle"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        <i class="bi bi-link"></i>
+                    </button>
+
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="https://www.zg.ch/behoerden/volkswirtschaftsdirektion/gibz"><i class="bi bi-house-door-fill"></i> | GIBZ Homepage</a></li>
+                        <li><a class="dropdown-item" href="https://moodle.gibz.ch/anmelden/"><i class="bi bi-list-task"></i> | Moodle</a></li>
+                        <li><a class="dropdown-item" href="https://gibz.sharepoint.com/"><i class="bi bi-bookmark-fill"></i> | Intranet</a></li>
+                        <li><a class="dropdown-item" href="https://gibz.zg.ch/"><i class="bi bi-person-workspace"></i> | schulNetz GIBZ</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="mailto:info@gibz.ch?subject=Notennachfrage%20GIBZ"><i class="bi bi-envelope-fill"></i> | Kontaktieren <br /> Sie Uns!</a></li>
+                    </ul>
+                </div>
                 <div class="vr mx-2"></div>
                 <button class="btn btn-outline-danger btn-sm" @onclick="Logout">
                     <i class="bi bi-box-arrow-right"></i> Logout
@@ -132,6 +149,24 @@ else if (Role == "prorektor")
                 <img src="https://www.edu.ch/media/wysiwyg/edu/schulen/gibz.png?v=1" alt="GIBZ Logo" height="40">
                 <span class="ms-2 fs-6 badge bg-dark text-white">PROREKTORAT</span>
             </a>
+            <div class="dropdown">
+                <button class="btn dropdown-toggle"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                    <i class="bi bi-link"></i>
+                </button>
+
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="https://www.zg.ch/behoerden/volkswirtschaftsdirektion/gibz"><i class="bi bi-house-door-fill"></i> | GIBZ Homepage</a></li>
+                    <li><a class="dropdown-item" href="https://moodle.gibz.ch/anmelden/"><i class="bi bi-list-task"></i> | Moodle</a></li>
+                    <li><a class="dropdown-item" href="https://gibz.sharepoint.com/"><i class="bi bi-bookmark-fill"></i> | Intranet</a></li>
+                    <li><a class="dropdown-item" href="https://gibz.zg.ch/"><i class="bi bi-person-workspace"></i> | schulNetz GIBZ</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="mailto:info@gibz.ch?subject=Notennachfrage%20GIBZ"><i class="bi bi-envelope-fill"></i> | Kontaktieren <br /> Sie Uns!</a></li>
+                </ul>
+            </div>
+            <div class="vr mx-2"></div>
             <div class="d-flex ms-auto">
                 <a class="btn btn-outline-danger btn-sm" @onclick="Logout">
                     <i class="bi bi-box-arrow-right"></i> Logout
