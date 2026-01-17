@@ -41,6 +41,10 @@ public class AuthController : ControllerBase
         {
             role = "teacher";
         }
+        else if (email.EndsWith("@gmail.com"))
+        {
+            role = "rektor";
+        }
         else
         {
             return BadRequest("Nur E-Mail-Adressen mit @gibz.ch oder @zg.ch sind erlaubt.");
