@@ -15,26 +15,27 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Add services to the container.
-
+        // Controllers
         builder.Services.AddControllers();
 
+        // CORS
         builder.Services.AddCors(options =>
         {
-            options.AddPolicy("AllowFrontend",
-                policy =>
-                {
-                    policy.WithOrigins("https://localhost:7199")
-                          .AllowAnyHeader()
-                          .AllowAnyMethod();
-                });
+            options.AddPolicy("AllowFrontend", policy =>
+            {
+                policy.WithOrigins("https://localhost:7199")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
+            });
         });
-        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+        // Swagger
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
+        // Database
         builder.Services.AddDbContext<AppDBContext>(options =>
-                options.UseMySql(
+            options.UseMySql(
                 builder.Configuration.GetConnectionString("DefaultConnection"),
                 ServerVersion.AutoDetect(
                     builder.Configuration.GetConnectionString("DefaultConnection")
@@ -42,40 +43,37 @@ public class Program
             )
         );
 
+        // Repositories & Services
         builder.Services.AddScoped<IAuthRepository, AuthRepository>();
         builder.Services.AddScoped<IAuthService, AuthService>();
-
-        builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IGradesRepository, GradeRepository>();
         builder.Services.AddScoped<IGradeService, GradeService>();
-
+        builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddSingleton<JwtService>();
-        builder.Services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = "JwtBearer";
-            options.DefaultChallengeScheme = "JwtBearer";
-        })
-        .AddJwtBearer("JwtBearer", options =>
-        {
-            options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+
+        // Authentication
+        builder.Services.AddAuthentication("JwtBearer")
+            .AddJwtBearer("JwtBearer", options =>
             {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                ValidAudience = builder.Configuration["Jwt:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
-            };
-        });
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
+                    )
+                };
+            });
 
         builder.Services.AddAuthorization();
 
-
         var app = builder.Build();
 
-        // Configure the HTTP request pipeline.
+        // Pipeline
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -84,9 +82,10 @@ public class Program
 
         app.UseHttpsRedirection();
 
-        app.UseAuthorization();
-
         app.UseCors("AllowFrontend");
+
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         app.MapControllers();
 

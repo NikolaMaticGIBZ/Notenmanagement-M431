@@ -1,6 +1,5 @@
 ﻿using Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
 using System.IdentityModel.Tokens.Jwt;
@@ -20,43 +19,56 @@ public class GradesController : ControllerBase
         _gradesService = gradesService;
     }
 
-    // CREATE a grade (teacher_id comes from logged-in user)
     [HttpPost]
     [Authorize(Roles = "teacher")]
     public async Task<IActionResult> Create([FromBody] CreateGradeRequest request)
     {
-        // TODO: replace with actual logged-in user id from JWT || Done!!
-        int teacherId = int.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
-        string role = User.FindFirstValue(ClaimTypes.Role)!;
+        var sub =
+            User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub") ??
+            User.FindFirstValue("id");
+
+        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out var teacherId))
+            return Unauthorized("JWT does not contain a valid user id (sub).");
 
         var result = await _gradesService.CreateGradeAsync(request, teacherId);
         return Ok(result);
     }
 
-    // GET all grades
+
+
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    [Authorize(Roles = "rektor")]
+    public async Task<IActionResult> GetAll([FromQuery] string? status)
     {
-        var result = await _gradesService.GetAllGradesAsync();
+        var result = await _gradesService.GetGradesAsync(status);
         return Ok(result);
     }
 
-    // GET a single grade by ID
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
+    [Authorize(Roles = "rektor")]
     public async Task<IActionResult> GetById(int id)
     {
-        var grade = await _gradesService.GetAllGradesAsync();
-        var singleGrade = grade.FirstOrDefault(g => g.Id == id);
-        if (singleGrade == null)
-            return NotFound();
-        return Ok(singleGrade);
+        var grade = await _gradesService.GetByIdAsync(id);
+        if (grade == null) return NotFound();
+        return Ok(grade);
     }
 
-    // DELETE a grade
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "rektor")]
     public async Task<IActionResult> Delete(int id)
     {
         var success = await _gradesService.DeleteGradeAsync(id);
+        if (!success) return NotFound();
+        return NoContent();
+    }
+
+    [HttpPatch("{id:int}/decision")]
+    [Authorize(Roles = "rektor")]
+    public async Task<IActionResult> Decide(int id, [FromBody] DecideGradeRequest request)
+    {
+        var success = await _gradesService.DecideAsync(id, request.Status, request.DecisionNote);
         if (!success) return NotFound();
         return NoContent();
     }

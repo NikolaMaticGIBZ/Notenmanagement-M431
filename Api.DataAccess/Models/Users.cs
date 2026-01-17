@@ -19,7 +19,9 @@ public class Users
     [MaxLength(255)]
     public string password_hash { get; set; } = string.Empty;
 
-    public ICollection<Grades> Grades { get; set; } = new List<Grades>();
+    public ICollection<Grades> CreatedGrades { get; set; } = new List<Grades>();
+    public ICollection<Grades> DecidedGrades { get; set; } = new List<Grades>();
+
 
     // 2FA
     public string? twofactor_code { get; set; }
