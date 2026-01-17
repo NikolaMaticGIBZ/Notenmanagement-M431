@@ -35,7 +35,7 @@ public class AuthController : ControllerBase
         }
         else if (email.EndsWith("@zg.ch"))
         {
-            role = "prorektor";
+            role = "rektor";
         }
         else if (email.EndsWith("@hotmail.com"))
         {
