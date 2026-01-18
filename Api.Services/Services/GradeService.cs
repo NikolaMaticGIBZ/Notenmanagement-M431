@@ -179,4 +179,21 @@ public class GradeService : IGradeService
         return true;
     }
 
+    public async Task<bool> DeleteMyGradeAsync(int id, int teacherId)
+    {
+        var grade = await _db.Grades.FirstOrDefaultAsync(g => g.id == id);
+        if (grade == null) return false;
+
+        // must be owner
+        if (grade.teacher_id != teacherId) return false;
+
+        // only allow delete while pending
+        if (!string.Equals(grade.status, "pending", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        _db.Grades.Remove(grade);
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
 }

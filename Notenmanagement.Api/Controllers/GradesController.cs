@@ -108,4 +108,23 @@ public class GradesController : ControllerBase
         return NoContent();
     }
 
+    [HttpDelete("mine/{id:int}")]
+    [Authorize(Roles = "teacher")]
+    public async Task<IActionResult> DeleteMine(int id)
+    {
+        var sub =
+            User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub") ??
+            User.FindFirstValue("id");
+
+        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out var teacherId))
+            return Unauthorized("JWT does not contain a valid user id (sub).");
+
+        var ok = await _gradesService.DeleteMyGradeAsync(id, teacherId);
+        if (!ok) return NotFound(); // not found OR not owned OR not pending
+        return NoContent();
+    }
+
+
 }

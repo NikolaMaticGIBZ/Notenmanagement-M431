@@ -6,7 +6,6 @@
 @using System.ComponentModel.DataAnnotations
 @using System.Net.Http.Headers
 @using System.Net.Http.Json
-@using System.Reflection
 
 <PageTitle>Noten Manager Übersicht</PageTitle>
 
@@ -27,6 +26,7 @@ else if (Role == "teacher")
             </a>
 
             <div class="d-flex align-items-center ms-auto gap-2">
+
                 <div class="form-check form-switch mb-0">
                     <input class="form-check-input" type="checkbox" role="switch"
                            checked="@IsDark"
@@ -65,7 +65,7 @@ else if (Role == "teacher")
     </nav>
 
     <!-- ================== TEACHER TABS ================== -->
-    <div class="bg-body border-bottom shadow-sm sticky-navbar" style="top: 56px;">
+    <div class="bg-body border-bottom shadow-sm sticky-navbar" style="top:56px;">
         <div class="container">
             <ul class="nav nav-underline gap-3">
                 <li class="nav-item">
@@ -76,10 +76,10 @@ else if (Role == "teacher")
                 </li>
                 <li class="nav-item">
                     <button class="btn nav-link @(teacherTab == "mine" ? "active" : "")"
-                            @onclick='async () => { teacherTab = "mine"; await LoadMyGrades(); }'>
-                        <i class="bi bi-card-list"></i> Meine Anfragen
+                            @onclick="OpenMyRequests">
+                        <i class="bi bi-inbox-fill"></i> Meine Anfragen
                         <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1 rounded-pill">
-                            @MyGrades.Count
+                            @MyPending.Count
                         </span>
                     </button>
                 </li>
@@ -88,11 +88,11 @@ else if (Role == "teacher")
     </div>
 
     <div class="container content-padding" style="padding-top: 120px;">
+        <div class="row justify-content-center">
+            <div class="col-md-9 col-lg-8">
 
-        @if (teacherTab == "new")
-        {
-            <div class="row justify-content-center">
-                <div class="col-md-8 col-lg-7">
+                @if (teacherTab == "new")
+                {
                     <div id="success-alert" class="alert alert-success d-none shadow-sm" role="alert">
                         <h4 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Gesendet!</h4>
                         <p>Der Notenantrag wurde erfolgreich an das Prorektorat übermittelt.</p>
@@ -151,14 +151,12 @@ else if (Role == "teacher")
                                                        @onchange="() => SetRounding(normal)" />
                                                 <label class="form-check-label" for="roundNormal">Mathematisch</label>
                                             </div>
-
                                             <div class="form-check">
                                                 <input class="form-check-input" type="radio" name="rounding" id="roundUp"
                                                        checked="@IsSelected("up")"
                                                        @onchange="() => SetRounding(up)" />
                                                 <label class="form-check-label text-success" for="roundUp">Aufrunden (0.5)</label>
                                             </div>
-
                                             <div class="form-check">
                                                 <input class="form-check-input" type="radio" name="rounding" id="roundDown"
                                                        checked="@IsSelected("down")"
@@ -173,9 +171,9 @@ else if (Role == "teacher")
                                     <label class="form-label fw-bold text-secondary text-uppercase small">Rektor</label>
                                     <InputSelect class="form-select form-select-lg" @bind-Value="gradeForm.RektorId">
                                         <option value="0">-- Wählen Sie einen Rektor --</option>
-                                        @foreach (var r in Rektoren)
+                                        @foreach (var rektor in Rektoren)
                                         {
-                                            <option value="@r.Id">@r.Name</option>
+                                            <option value="@rektor.Id">@rektor.Name</option>
                                         }
                                     </InputSelect>
                                     <span class="text-danger">@RektorValidationMessage</span>
@@ -194,167 +192,216 @@ else if (Role == "teacher")
                             </EditForm>
                         </div>
                     </div>
-                </div>
-            </div>
-        }
-        else if (teacherTab == "mine")
-        {
-            @if (MyGrades.Count == 0)
-            {
-                <div class="text-center py-5">
-                    <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
-                    <h3 class="text-muted mt-3">Keine Anfragen</h3>
-                </div>
-            }
-            else
-            {
-                @foreach (var g in MyGrades.OrderByDescending(x => GetCreatedAt(x) ?? DateTime.MinValue))
+                }
+                else if (teacherTab == "mine")
                 {
-                    var status = (GetString(g, "Status") ?? "pending").ToLower();
-                    var createdAt = GetCreatedAt(g);
-                    var comment = GetString(g, "Comment") ?? GetString(g, "comment");
-                    var decisionNote = GetString(g, "DecisionNote") ?? GetString(g, "decision_note");
+                    <!-- Teacher Status Tabs -->
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <ul class="nav nav-pills gap-2">
+                                <li class="nav-item">
+                                    <button class="btn btn-sm @(myTab == "pending" ? "btn-primary" : "btn-outline-primary")"
+                                            @onclick='() => myTab = "pending"'>
+                                        Offen <span class="badge bg-light text-dark ms-1">@MyPending.Count</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="btn btn-sm @(myTab == "approved" ? "btn-success" : "btn-outline-success")"
+                                            @onclick='() => myTab = "approved"'>
+                                        Genehmigt <span class="badge bg-light text-dark ms-1">@MyApproved.Count</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="btn btn-sm @(myTab == "rejected" ? "btn-danger" : "btn-outline-danger")"
+                                            @onclick='() => myTab = "rejected"'>
+                                        Abgelehnt <span class="badge bg-light text-dark ms-1">@MyRejected.Count</span>
+                                    </button>
+                                </li>
 
-                    <div class="card shadow-sm border-0 mb-3">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <span class="badge bg-primary me-2">@g.ModuleName</span>
+                                <li class="ms-auto">
+                                    <button class="btn btn-sm btn-outline-secondary" @onclick="LoadMyGrades">
+                                        <i class="bi bi-arrow-clockwise"></i> Aktualisieren
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
 
-                                    @if (createdAt.HasValue)
-                                    {
-                                        <span class="text-muted small ms-1">
-                                            <i class="bi bi-calendar3"></i> @createdAt.Value.ToLocalTime().ToString("dd.MM.yyyy")
-                                            <span class="ms-2"><i class="bi bi-clock"></i> @createdAt.Value.ToLocalTime().ToString("HH:mm")</span>
-                                        </span>
-                                    }
+                    @if (MyGrades.Count == 0)
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+                            <h3 class="text-muted mt-3">Keine Anfragen</h3>
+                        </div>
+                    }
+                    else
+                    {
+                        var list = myTab == "pending" ? MyPending : myTab == "approved" ? MyApproved : MyRejected;
 
-                                    <h4 class="fw-bold mb-1 mt-2">
-                                        @g.StudentName <span class="text-muted fw-normal fs-6">(@g.CourseName)</span>
-                                    </h4>
+                        if (list.Count == 0)
+                        {
+                            <div class="text-center py-5">
+                                <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+                                <h3 class="text-muted mt-3">Keine Einträge</h3>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var g in list)
+                            {
+                                <div class="card shadow-sm border-0 mb-3">
+                                    <div class="card-body p-4">
 
-                                    <div class="text-muted small mb-2">
-                                        Status:
-                                        @if (status == "approved")
-                                        {
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle ms-1">Genehmigt</span>
-                                        }
-                                        else if (status == "rejected")
-                                        {
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1">Abgelehnt</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1">Offen</span>
-                                        }
+                                        <div class="d-flex justify-content-between mb-2 border-bottom pb-2">
+                                            <span class="text-muted small">
+                                                <i class="bi bi-calendar3"></i> @g.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                                            </span>
+                                            <span class="text-muted small">
+                                                <i class="bi bi-clock"></i> @g.CreatedAt.ToLocalTime().ToString("HH:mm") Uhr
+                                            </span>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between align-items-start gap-3">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-items-center gap-2 mb-1">
+                                                    <span class="badge bg-primary">@g.ModuleName</span>
+
+                                                    @if (g.Status == "pending")
+                                                    {
+                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Nicht beantwortet</span>
+                                                    }
+                                                    else if (g.Status == "approved")
+                                                    {
+                                                        <span class="badge bg-success-subtle text-success border border-success-subtle">Genehmigt</span>
+                                                    }
+                                                    else if (g.Status == "rejected")
+                                                    {
+                                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Abgelehnt</span>
+                                                    }
+                                                </div>
+
+                                                <h5 class="fw-bold mb-1">
+                                                    @g.StudentName <span class="text-muted fw-normal">(@g.CourseName)</span>
+                                                </h5>
+
+                                                <div class="text-muted small mb-2">
+                                                    Rektor: @g.RektorName
+                                                </div>
+
+                                                @if (!string.IsNullOrWhiteSpace(g.Comment))
+                                                {
+                                                    <div class="mt-2 p-2 bg-body-tertiary border rounded small">
+                                                        <strong>Bemerkung:</strong> @g.Comment
+                                                    </div>
+                                                }
+
+                                                @if (!string.IsNullOrWhiteSpace(g.DecisionNote))
+                                                {
+                                                    <div class="mt-2 p-2 bg-body-tertiary border rounded small">
+                                                        <strong>Entscheid-Notiz:</strong> @g.DecisionNote
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            <div class="text-end">
+                                                <div class="display-6 fw-bold text-primary">@g.GradeValue</div>
+
+                                                @if (g.Status == "pending")
+                                                {
+                                                    <button class="btn btn-outline-primary btn-sm mt-2"
+                                                            @onclick="() => OpenEditModal(g)">
+                                                        <i class="bi bi-pencil"></i> Bearbeiten
+                                                    </button>
+                                                }
+                                            </div>
+                                        </div>
                                     </div>
+                                </div>
+                            }
+                        }
+                    }
+                }
 
-                                    @if (!string.IsNullOrWhiteSpace(comment))
-                                    {
-                                        <div class="mt-2 p-2 bg-body-tertiary border rounded small">
-                                            <strong>Deine Bemerkung:</strong> @comment
-                                        </div>
-                                    }
-
-                                    @if (!string.IsNullOrWhiteSpace(decisionNote))
-                                    {
-                                        <div class="mt-2 p-2 bg-body-tertiary border rounded small">
-                                            <strong>Entscheid-Notiz:</strong> @decisionNote
-                                        </div>
-                                    }
+                @if (showEditModal && editGrade != null)
+                {
+                    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title">Anfrage bearbeiten (nur offen)</h5>
+                                    <button type="button" class="btn-close btn-close-white" @onclick="CloseEditModal"></button>
                                 </div>
 
-                                <div class="text-center">
-                                    <div class="fs-4 fw-bold border rounded px-4 py-2">@g.GradeValue</div>
-
-                                    @if (status == "pending")
+                                <div class="modal-body">
+                                    @if (!string.IsNullOrWhiteSpace(editError))
                                     {
-                                        <div class="d-flex gap-2 mt-3 justify-content-center">
-                                            <button class="btn btn-outline-primary btn-sm" @onclick="() => OpenTeacherEdit(g)">
-                                                <i class="bi bi-pencil"></i> Bearbeiten
-                                            </button>
-                                            <button class="btn btn-outline-danger btn-sm" @onclick="() => DeleteMyGrade(g.Id)">
-                                                <i class="bi bi-trash"></i> Löschen
-                                            </button>
-                                        </div>
+                                        <div class="alert alert-danger">@editError</div>
                                     }
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold small text-secondary">Modul</label>
+                                            <InputText class="form-control" @bind-Value="editForm.ModuleName" />
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold small text-secondary">Klasse</label>
+                                            <InputText class="form-control" @bind-Value="editForm.CourseName" />
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-8 mb-3">
+                                            <label class="form-label fw-bold small text-secondary">Schüler</label>
+                                            <InputText class="form-control" @bind-Value="editForm.StudentName" />
+                                        </div>
+
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label fw-bold small text-secondary">Note</label>
+                                            <InputNumber class="form-control text-center fw-bold" @bind-Value="editForm.GradeValue" Min="1" Max="6" Step="0.1" />
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold small text-secondary">Rektor</label>
+                                        <InputSelect class="form-select" @bind-Value="editForm.RektorId">
+                                            <option value="0">-- Wählen Sie einen Rektor --</option>
+                                            @foreach (var rektor in Rektoren)
+                                            {
+                                                <option value="@rektor.Id">@rektor.Name</option>
+                                            }
+                                        </InputSelect>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold small text-secondary">Bemerkung</label>
+                                        <InputTextArea class="form-control" rows="3" @bind-Value="editForm.Comment" />
+                                    </div>
+
+                                    <div class="text-muted small">
+                                        Hinweis: Bearbeiten ist nur möglich solange die Anfrage <strong>offen</strong> ist.
+                                    </div>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button class="btn btn-light" @onclick="CloseEditModal">Abbrechen</button>
+                                    <button class="btn btn-primary" @onclick="SaveEdit">
+                                        <i class="bi bi-check2"></i> Speichern
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 }
-            }
-        }
 
-        @if (showTeacherEditModal && editGrade is not null)
-        {
-            <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title">Anfrage bearbeiten (nur solange offen)</h5>
-                            <button type="button" class="btn-close btn-close-white" @onclick="CloseTeacherEdit"></button>
-                        </div>
-                        <div class="modal-body">
-                            @if (!string.IsNullOrWhiteSpace(editError))
-                            {
-                                <div class="alert alert-danger">@editError</div>
-                            }
-
-                            <div class="mb-3">
-                                <label class="form-label">Modul</label>
-                                <input class="form-control" @bind="editForm.ModuleName" />
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">Klasse</label>
-                                    <input class="form-control" @bind="editForm.CourseName" />
-                                </div>
-                                <div class="col-md-8 mb-3">
-                                    <label class="form-label">Schüler</label>
-                                    <input class="form-control" @bind="editForm.StudentName" />
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">Note</label>
-                                    <input type="number" step="0.1" min="1" max="6" class="form-control" @bind="editForm.GradeValue" />
-                                </div>
-                                <div class="col-md-8 mb-3">
-                                    <label class="form-label">Bemerkung</label>
-                                    <textarea class="form-control" rows="3" @bind="editForm.Comment"></textarea>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Rektor</label>
-                                <select class="form-select" @bind="editForm.RektorId">
-                                    <option value="0">-- Wählen Sie einen Rektor --</option>
-                                    @foreach (var r in Rektoren)
-                                    {
-                                        <option value="@r.Id">@r.Name</option>
-                                    }
-                                </select>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-light" @onclick="CloseTeacherEdit">Abbrechen</button>
-                            <button class="btn btn-primary" @onclick="SaveTeacherEdit">
-                                Speichern
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
-        }
+        </div>
     </div>
 }
 else if (Role == "rektor")
 {
     <!-- ================== PROREKTOR HEADER ================== -->
-    <nav class="navbar navbar-expand-lg border-bottom shadow-sm sticky-navbar">
+    <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm sticky-navbar">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
                 <img src="https://www.edu.ch/media/wysiwyg/edu/schulen/gibz.png?v=1" alt="GIBZ Logo" height="40">
@@ -363,30 +410,46 @@ else if (Role == "rektor")
 
             <div class="d-flex align-items-center ms-auto gap-2">
                 <div class="form-check form-switch mb-0">
-                    <input class="form-check-input" type="checkbox" role="switch"
-                           checked="@IsDark"
-                           @onchange="ToggleTheme" />
+                    <input class="form-check-input" type="checkbox" role="switch" checked="@IsDark" @onchange="ToggleTheme" />
                     <label class="form-check-label small ms-1">
                         <i class="bi @(IsDark ? "bi-moon-stars-fill" : "bi-sun-fill")"></i>
                     </label>
                 </div>
 
                 <div class="dropdown">
-                    <button class="btn dropdown-toggle"
-                            type="button"
-                            data-bs-toggle="dropdown"
-                            data-bs-display="static"
-                            aria-expanded="false">
+                    <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                         <i class="bi bi-link"></i>
                     </button>
 
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="https://www.zg.ch/behoerden/volkswirtschaftsdirektion/gibz"><i class="bi bi-house-door-fill"></i> | GIBZ Homepage</a></li>
-                        <li><a class="dropdown-item" href="https://moodle.gibz.ch/anmelden/"><i class="bi bi-list-task"></i> | Moodle</a></li>
-                        <li><a class="dropdown-item" href="https://gibz.sharepoint.com/"><i class="bi bi-bookmark-fill"></i> | Intranet</a></li>
-                        <li><a class="dropdown-item" href="https://gibz.zg.ch/"><i class="bi bi-person-workspace"></i> | schulNetz GIBZ</a></li>
+                        <li>
+                            <a class="dropdown-item" href="https://www.zg.ch/behoerden/volkswirtschaftsdirektion/gibz">
+                                <i class="bi bi-house-door-fill"></i> | GIBZ Homepage
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="https://moodle.gibz.ch/anmelden/">
+                                <i class="bi bi-list-task"></i> | Moodle
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="https://gibz.sharepoint.com/">
+                                <i class="bi bi-bookmark-fill"></i> | Intranet
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="https://gibz.zg.ch/">
+                                <i class="bi bi-person-workspace"></i> | schulNetz GIBZ
+                            </a>
+                        </li>
+
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="mailto:info@gibz.ch?subject=Notennachfrage%20GIBZ"><i class="bi bi-envelope-fill"></i> | Kontaktieren <br /> Sie Uns!</a></li>
+
+                        <li>
+                            <a class="dropdown-item" href="mailto:info@gibz.ch?subject=Notennachfrage%20GIBZ">
+                                <i class="bi bi-envelope-fill"></i> | Kontaktieren <br /> Sie Uns!
+                            </a>
+                        </li>
                     </ul>
                 </div>
 
@@ -399,28 +462,36 @@ else if (Role == "rektor")
         </div>
     </nav>
 
-    <div class="bg-body border-bottom shadow-sm sticky-navbar" style="top: 56px;">
+    <div class="bg-white border-bottom shadow-sm sticky-navbar" style="top: 56px;">
         <div class="container">
             <ul class="nav nav-underline gap-3">
                 <li class="nav-item">
-                    <button class="btn nav-link @(activeTab == "pending" ? "active" : "")"
+                    <button class="btn nav-link @(activeTab == "pending" ? "active" : "") cursor-pointer"
                             @onclick='() => activeTab = "pending"'>
                         <i class="bi bi-inbox-fill text-primary"></i> Offen
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1 rounded-pill">@PendingGrades.Count</span>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1 rounded-pill">
+                            @PendingGrades.Count
+                        </span>
                     </button>
                 </li>
+
                 <li class="nav-item">
-                    <button class="btn nav-link @(activeTab == "approved" ? "active" : "")"
+                    <button class="btn nav-link @(activeTab == "approved" ? "active" : "") cursor-pointer"
                             @onclick='() => activeTab = "approved"'>
                         <i class="bi bi-check-circle-fill text-success"></i> Genehmigt
-                        <span class="badge bg-success-subtle text-success border border-success-subtle ms-1 rounded-pill">@ApprovedGrades.Count</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle ms-1 rounded-pill">
+                            @ApprovedGrades.Count
+                        </span>
                     </button>
                 </li>
+
                 <li class="nav-item">
-                    <button class="btn nav-link @(activeTab == "rejected" ? "active" : "")"
+                    <button class="btn nav-link @(activeTab == "rejected" ? "active" : "") cursor-pointer"
                             @onclick='() => activeTab = "rejected"'>
                         <i class="bi bi-x-circle-fill text-danger"></i> Abgelehnt
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1 rounded-pill">@RejectedGrades.Count</span>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1 rounded-pill">
+                            @RejectedGrades.Count
+                        </span>
                     </button>
                 </li>
             </ul>
@@ -430,15 +501,150 @@ else if (Role == "rektor")
     <div class="container content-padding" style="padding-top: 120px;">
         @if (activeTab == "pending")
         {
-            @RenderRektorList(PendingGrades, true)
+            if (PendingGrades.Count == 0)
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+                    <h3 class="text-muted mt-3">Keine Anträge</h3>
+                </div>
+            }
+            else
+            {
+                @foreach (var g in PendingGrades)
+                {
+                    <div class="card shadow-sm border-0 mb-3 request-card">
+                        <div class="card-body p-4">
+                            @* Only show date/time if your GradeResponse has CreatedAt (optional) *@
+                            @if (g.GetType().GetProperty("CreatedAt") != null)
+                            {
+                                var createdAt = (DateTime?)g.GetType().GetProperty("CreatedAt")!.GetValue(g);
+                                if (createdAt.HasValue)
+                                {
+                                    <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                                        <span class="text-muted small">
+                                            <i class="bi bi-calendar3"></i> @g.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                                        </span>
+                                        <span class="text-muted small">
+                                            <i class="bi bi-clock"></i> @g.CreatedAt.ToLocalTime().ToString("HH:mm") Uhr
+                                        </span>
+                                    </div>
+                                }
+                            }
+
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <span class="badge bg-primary me-2">@g.ModuleName</span>
+
+                                    <h4 class="fw-bold mb-1">
+                                        @g.StudentName
+                                        <span class="text-muted fw-normal fs-6">(@g.CourseName)</span>
+                                    </h4>
+
+                                    <div class="text-muted small mb-3">Von: @g.TeacherName</div>
+
+                                    @if (!string.IsNullOrWhiteSpace(g.Comment))
+                                    {
+                                        <div class="mt-2 p-2 bg-light border rounded small">
+                                            <strong>Bemerkung:</strong> @g.Comment
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="col-md-4 text-center border-start-md">
+                                    <div class="grade-badge mb-3 bg-success-subtle text-success border border-success">
+                                        @g.GradeValue
+                                    </div>
+
+                                    <div class="d-flex gap-2 w-100 justify-content-center">
+                                        <button class="btn btn-outline-danger flex-grow-1"
+                                                @onclick='() => OpenModal("rejected", g.Id)'>
+                                            Ablehnen
+                                        </button>
+                                        <button class="btn btn-success flex-grow-1"
+                                                @onclick='() => OpenModal("approved", g.Id)'>
+                                            Genehmigen
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
         }
         else if (activeTab == "approved")
         {
-            @RenderRektorList(ApprovedGrades, false)
+            if (ApprovedGrades.Count == 0)
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+                    <h3 class="text-muted mt-3">Keine genehmigten Anträge</h3>
+                </div>
+            }
+            else
+            {
+                @foreach (var g in ApprovedGrades)
+                {
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-body p-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-8 opacity-75">
+                                    <span class="badge bg-secondary me-2">@g.ModuleName</span>
+
+                                    <h4 class="fw-bold mb-1">
+                                        @g.StudentName
+                                        <span class="text-muted fw-normal fs-6">(@g.CourseName)</span>
+                                    </h4>
+
+                                    <div class="text-muted small">Von: @g.TeacherName</div>
+                                </div>
+
+                                <div class="col-md-4 text-center border-start-md">
+                                    <div class="grade-badge mb-3 bg-light text-dark border">@g.GradeValue</div>
+                                    <div class="text-success fw-bold">Genehmigt</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
         }
         else if (activeTab == "rejected")
         {
-            @RenderRektorList(RejectedGrades, false)
+            if (RejectedGrades.Count == 0)
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+                    <h3 class="text-muted mt-3">Keine abgelehnten Anträge</h3>
+                </div>
+            }
+            else
+            {
+                @foreach (var g in RejectedGrades)
+                {
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-body p-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-8 opacity-75">
+                                    <span class="badge bg-secondary me-2">@g.ModuleName</span>
+
+                                    <h4 class="fw-bold mb-1">
+                                        @g.StudentName
+                                        <span class="text-muted fw-normal fs-6">(@g.CourseName)</span>
+                                    </h4>
+
+                                    <div class="text-muted small">Von: @g.TeacherName</div>
+                                </div>
+
+                                <div class="col-md-4 text-center border-start-md">
+                                    <div class="grade-badge mb-3 bg-light text-dark border">@g.GradeValue</div>
+                                    <div class="text-danger fw-bold">Abgelehnt</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
         }
 
         @if (showModal)
@@ -450,13 +656,18 @@ else if (Role == "rektor")
                             <h5 class="modal-title">Antrag @(modalType == "approved" ? "genehmigen" : "ablehnen")</h5>
                             <button type="button" class="btn-close btn-close-white" @onclick="CloseModal"></button>
                         </div>
+
                         <div class="modal-body">
                             <p>Möchten Sie diese Aktion wirklich durchführen?</p>
                             <textarea class="form-control" rows="3" placeholder="Begründung / Notiz..." @bind="decisionNote"></textarea>
                         </div>
+
                         <div class="modal-footer">
                             <button class="btn btn-light" @onclick="CloseModal">Abbrechen</button>
-                            <button class="btn @(modalType == "approved" ? "btn-success" : "btn-danger")" @onclick="ConfirmProrektorAction">Bestätigen</button>
+                            <button class="btn @(modalType == "approved" ? "btn-success" : "btn-danger")"
+                                    @onclick="ConfirmProrektorAction">
+                                Bestätigen
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -471,12 +682,9 @@ else if (Role == "rektor")
     private const string normal = "normal";
 
     private string Role { get; set; } = string.Empty;
-    private bool IsAccessDenied { get; set; }
+    private bool IsAccessDenied { get; set; } = false;
 
     private bool IsDark;
-
-    private string teacherTab = "new"; // "new" | "mine"
-    private string activeTab = "pending"; // rektor tabs
 
     private List<(int Id, string Name)> Rektoren = new()
     {
@@ -490,25 +698,48 @@ else if (Role == "rektor")
     private string RoundingOption { get; set; } = normal;
     private string RektorValidationMessage { get; set; } = string.Empty;
 
-    // Rektor lists
+    // ================= TEACHER STATE =================
+    private string teacherTab = "new"; // "new" | "mine"
+    private string myTab = "pending";  // "pending" | "approved" | "rejected"
+
+    private List<GradeResponse> MyGrades = new();
+    private List<GradeResponse> MyPending => MyGrades.Where(x => x.Status == "pending").ToList();
+    private List<GradeResponse> MyApproved => MyGrades.Where(x => x.Status == "approved").ToList();
+    private List<GradeResponse> MyRejected => MyGrades.Where(x => x.Status == "rejected").ToList();
+
+    // teacher edit modal
+    private bool showEditModal = false;
+    private GradeResponse? editGrade;
+    private UpdateGradeRequest editForm = new();
+    private string editError = "";
+
+    // ================= REKTOR STATE (NEU) =================
+    private string activeTab = "pending"; // wird im rektor-Markup benutzt
+
     private List<GradeResponse> PendingGrades = new();
     private List<GradeResponse> ApprovedGrades = new();
     private List<GradeResponse> RejectedGrades = new();
 
-    // Teacher list
-    private List<GradeResponse> MyGrades = new();
-
-    // Rektor modal
+    // rektor decision modal (NEU)
     private bool showModal = false;
-    private string modalType = "";
+    private string modalType = "";     // "approved" | "rejected"
     private int selectedGradeId;
     private string decisionNote = "";
 
-    // Teacher edit modal
-    private bool showTeacherEditModal = false;
-    private GradeResponse? editGrade;
-    private UpdateGradeRequest editForm = new();
-    private string editError = "";
+    private void SetRounding(string option) => RoundingOption = option;
+    private bool IsSelected(string option) => RoundingOption == option;
+    private decimal RoundedGrade => ApplyRounding(gradeForm.GradeValue, RoundingOption);
+
+    private decimal ApplyRounding(decimal grade, string rounding)
+    {
+        grade = Math.Clamp(grade, 1m, 6m);
+        return rounding switch
+        {
+            "up" => Math.Ceiling(grade * 2) / 2,
+            "down" => Math.Floor(grade * 2) / 2,
+            _ => Math.Round(grade * 2, MidpointRounding.AwayFromZero) / 2
+        };
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -528,49 +759,60 @@ else if (Role == "rektor")
             return;
         }
 
-        // Theme state
         var theme = await JS.InvokeAsync<string>("theme.get");
         IsDark = theme == "dark";
 
-        if (Role == "rektor")
+        if (Role == "teacher")
         {
-            await LoadGrades();
-        }
-        else if (Role == "teacher")
-        {
-            // default tab for teacher
-            teacherTab = "mine";
             await LoadMyGrades();
+            teacherTab = "mine";
+        }
+        else if (Role == "rektor")
+        {
+            await LoadGrades();          // NEU: wichtig für rektor-Listen
+            activeTab = "pending";       // optional, aber sinnvoll als default
         }
     }
 
-    // ---------- THEME ----------
     private async Task ToggleTheme(ChangeEventArgs e)
     {
         IsDark = (bool)e.Value!;
         await JS.InvokeVoidAsync("theme.set", IsDark ? "dark" : "light");
     }
 
-    // ---------- TEACHER CREATE ----------
-    private void SetRounding(string option) => RoundingOption = option;
-    private bool IsSelected(string option) => RoundingOption == option;
-    private decimal RoundedGrade => ApplyRounding(gradeForm.GradeValue, RoundingOption);
-
-    private decimal ApplyRounding(decimal grade, string rounding)
+    private async Task OpenMyRequests()
     {
-        grade = Math.Clamp(grade, 1m, 6m);
-        return rounding switch
-        {
-            "up" => Math.Ceiling(grade * 2) / 2,
-            "down" => Math.Floor(grade * 2) / 2,
-            _ => Math.Round(grade * 2, MidpointRounding.AwayFromZero) / 2
-        };
+        teacherTab = "mine";
+        await LoadMyGrades();
     }
 
+    // ================= TEACHER LOAD =================
+    private async Task LoadMyGrades()
+    {
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+        if (string.IsNullOrEmpty(token)) return;
+
+        Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        MyGrades = await Http.GetFromJsonAsync<List<GradeResponse>>("api/grades/mine") ?? new();
+    }
+
+    // ================= REKTOR LOAD (NEU) =================
+    private async Task LoadGrades()
+    {
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+        if (string.IsNullOrEmpty(token)) return;
+
+        Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        PendingGrades = await Http.GetFromJsonAsync<List<GradeResponse>>("api/grades?status=pending") ?? new();
+        ApprovedGrades = await Http.GetFromJsonAsync<List<GradeResponse>>("api/grades?status=approved") ?? new();
+        RejectedGrades = await Http.GetFromJsonAsync<List<GradeResponse>>("api/grades?status=rejected") ?? new();
+    }
+
+    // ================= TEACHER CREATE =================
     private async Task ConfirmAction()
     {
         RektorValidationMessage = string.Empty;
-
         if (gradeForm.RektorId == 0)
         {
             RektorValidationMessage = "Bitte einen Rektor auswählen.";
@@ -593,12 +835,8 @@ else if (Role == "rektor")
                 StudentName = gradeForm.StudentName,
                 GradeValue = RoundedGrade,
                 RektorId = gradeForm.RektorId,
-                // IMPORTANT: only works if CreateGradeRequest has Comment
-                // Comment = gradeForm.Comment
+                Comment = gradeForm.Comment
             };
-
-            // If your CreateGradeRequest has Comment, uncomment this line:
-            SetPropertyIfExists(request, "Comment", gradeForm.Comment);
 
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/grades")
             {
@@ -614,8 +852,9 @@ else if (Role == "rektor")
                 gradeForm = new();
                 RoundingOption = normal;
 
-                // refresh teacher list
                 await LoadMyGrades();
+                teacherTab = "mine";
+                myTab = "pending";
             }
             else
             {
@@ -629,42 +868,11 @@ else if (Role == "rektor")
         }
     }
 
-    private void OpenAIHelper()
+    // ================= TEACHER EDIT MODAL =================
+    private void OpenEditModal(GradeResponse g)
     {
-        if (string.IsNullOrWhiteSpace(gradeForm.StudentName) || string.IsNullOrWhiteSpace(gradeForm.ModuleName) || string.IsNullOrWhiteSpace(gradeForm.CourseName))
-        {
-            JS.InvokeVoidAsync("alert", "Bitte zuerst Schüler, Modul und Klasse ausfüllen.");
-            return;
-        }
-
-        var prompt =
-            $"Ich bin Lehrer an der Berufsschule GIBZ Kanton Zug.\n" +
-            $"Ich möchte für meinen Schüler {gradeForm.StudentName} in der Klasse {gradeForm.CourseName} " +
-            $"im Modul {gradeForm.ModuleName} eine Note von {gradeForm.GradeValue} eingeben.\n\n" +
-            "Bitte analysiere professionell, ob die Note mathematisch gerundet, auf- oder abgerundet werden sollte.\n" +
-            "Gib eine klare Empfehlung und kurze Begründung.";
-
-        var chatUrl = $"https://chat.openai.com/?prompt={Uri.EscapeDataString(prompt)}";
-        JS.InvokeVoidAsync("window.open", chatUrl, "_blank");
-    }
-
-    // ---------- TEACHER LIST ----------
-    private async Task LoadMyGrades()
-    {
-        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
-        if (string.IsNullOrEmpty(token)) return;
-
-        Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        // Must exist in your API
-        MyGrades = await Http.GetFromJsonAsync<List<GradeResponse>>("api/grades/mine") ?? new();
-    }
-
-    private void OpenTeacherEdit(GradeResponse g)
-    {
-        editGrade = g;
         editError = "";
-        showTeacherEditModal = true;
+        editGrade = g;
 
         editForm = new UpdateGradeRequest
         {
@@ -672,21 +880,25 @@ else if (Role == "rektor")
             CourseName = g.CourseName,
             StudentName = g.StudentName,
             GradeValue = g.GradeValue,
-            RektorId = TryGetInt(g, "RektorId") ?? 0,
-            Comment = GetString(g, "Comment") ?? ""
+            RektorId = g.RektorId,
+            Comment = g.Comment ?? ""
         };
+
+        showEditModal = true;
     }
 
-    private void CloseTeacherEdit()
+    private void CloseEditModal()
     {
-        showTeacherEditModal = false;
+        showEditModal = false;
         editGrade = null;
         editError = "";
     }
 
-    private async Task SaveTeacherEdit()
+    private async Task SaveEdit()
     {
-        if (editGrade is null) return;
+        if (editGrade == null) return;
+
+        editError = "";
 
         if (editForm.RektorId == 0)
         {
@@ -699,23 +911,20 @@ else if (Role == "rektor")
             var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
             if (string.IsNullOrEmpty(token)) return;
 
-            var req = new HttpRequestMessage(HttpMethod.Put, $"api/grades/{editGrade.Id}")
-            {
-                Content = JsonContent.Create(editForm)
-            };
-            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var res = await Http.SendAsync(req);
+            var res = await Http.PutAsJsonAsync($"api/grades/{editGrade.Id}", editForm);
+
             if (!res.IsSuccessStatusCode)
             {
-                editError = await res.Content.ReadAsStringAsync();
+                var txt = await res.Content.ReadAsStringAsync();
+                editError = txt;
                 return;
             }
 
-            showTeacherEditModal = false;
-            editGrade = null;
-
+            showEditModal = false;
             await LoadMyGrades();
+            myTab = "pending";
         }
         catch (Exception ex)
         {
@@ -723,44 +932,10 @@ else if (Role == "rektor")
         }
     }
 
-    private async Task DeleteMyGrade(int id)
-    {
-        var ok = await JS.InvokeAsync<bool>("confirm", "Willst du diese Anfrage wirklich löschen?");
-        if (!ok) return;
-
-        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
-        if (string.IsNullOrEmpty(token)) return;
-
-        var req = new HttpRequestMessage(HttpMethod.Delete, $"api/grades/{id}");
-        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        var res = await Http.SendAsync(req);
-        if (!res.IsSuccessStatusCode)
-        {
-            var txt = await res.Content.ReadAsStringAsync();
-            await JS.InvokeVoidAsync("alert", $"Fehler: {txt}");
-            return;
-        }
-
-        await LoadMyGrades();
-    }
-
-    // ---------- REKTOR LIST ----------
-    private async Task LoadGrades()
-    {
-        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
-        if (string.IsNullOrEmpty(token)) return;
-
-        Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        PendingGrades = await Http.GetFromJsonAsync<List<GradeResponse>>("api/grades?status=pending") ?? new();
-        ApprovedGrades = await Http.GetFromJsonAsync<List<GradeResponse>>("api/grades?status=approved") ?? new();
-        RejectedGrades = await Http.GetFromJsonAsync<List<GradeResponse>>("api/grades?status=rejected") ?? new();
-    }
-
+    // ================= REKTOR DECISION MODAL (NEU) =================
     private void OpenModal(string type, int gradeId)
     {
-        modalType = type;
+        modalType = type;           // "approved" oder "rejected"
         selectedGradeId = gradeId;
         decisionNote = "";
         showModal = true;
@@ -775,11 +950,7 @@ else if (Role == "rektor")
 
         Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var body = new
-        {
-            status = modalType,
-            decisionNote = decisionNote
-        };
+        var body = new { status = modalType, decisionNote = decisionNote };
 
         var request = new HttpRequestMessage(new HttpMethod("PATCH"), $"api/grades/{selectedGradeId}/decision")
         {
@@ -787,7 +958,6 @@ else if (Role == "rektor")
         };
 
         var res = await Http.SendAsync(request);
-
         showModal = false;
 
         if (res.IsSuccessStatusCode)
@@ -801,7 +971,28 @@ else if (Role == "rektor")
         }
     }
 
-    // ---------- COMMON ----------
+    private void OpenAIHelper()
+    {
+        if (string.IsNullOrWhiteSpace(gradeForm.StudentName) ||
+            string.IsNullOrWhiteSpace(gradeForm.ModuleName) ||
+            string.IsNullOrWhiteSpace(gradeForm.CourseName))
+        {
+            JS.InvokeVoidAsync("alert", "Bitte zuerst Schüler, Modul und Klasse ausfüllen.");
+            return;
+        }
+
+        var prompt = $"Ich bin Lehrer an der Berufsschule GIBZ Kanton Zug.\n" +
+                     $"Ich möchte für meinen Schüler {gradeForm.StudentName} in der Klasse {gradeForm.CourseName} " +
+                     $"im Modul {gradeForm.ModuleName} eine Note von {gradeForm.GradeValue} eingeben.\n\n" +
+                     "Bitte analysiere professionell, ob die Note mathematisch gerundet, auf- oder abgerundet werden sollte, " +
+                     "unter Berücksichtigung der üblichen schulischen Bewertungsrichtlinien.\n" +
+                     "Gib eine klare Empfehlung (Aufrunden/Abrunden/Mathematisch) und eine kurze Begründung.\n\n" +
+                     "Antworte so, dass ein Lehrer direkt entscheiden kann.";
+
+        var chatUrl = $"https://chat.openai.com/?prompt={Uri.EscapeDataString(prompt)}";
+        JS.InvokeVoidAsync("window.open", chatUrl, "_blank");
+    }
+
     private async Task Logout()
     {
         await JS.InvokeVoidAsync("localStorage.removeItem", "jwt");
@@ -817,6 +1008,7 @@ else if (Role == "rektor")
             if (parts.Length != 3) return string.Empty;
             var payload = parts[1].Replace('-', '+').Replace('_', '/');
             while (payload.Length % 4 != 0) payload += "=";
+
             var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
             var doc = System.Text.Json.JsonDocument.Parse(json);
 
@@ -836,113 +1028,15 @@ else if (Role == "rektor")
         {
             var parts = token.Split('.');
             if (parts.Length != 3) return true;
+
             var payload = parts[1].Replace('-', '+').Replace('_', '/');
             while (payload.Length % 4 != 0) payload += "=";
+
             var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
             var exp = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("exp").GetInt64();
             return DateTimeOffset.FromUnixTimeSeconds(exp) < DateTimeOffset.UtcNow;
         }
         catch { return true; }
-    }
-
-    // Render helper for rektor list (re-uses your existing card style)
-    private RenderFragment RenderRektorList(List<GradeResponse> list, bool showActions) => builder =>
-    {
-        if (list.Count == 0)
-        {
-            builder.AddMarkupContent(0, @"
-                <div class=""text-center py-5"">
-                    <i class=""bi bi-inbox text-muted"" style=""font-size: 4rem;""></i>
-                    <h3 class=""text-muted mt-3"">Keine Anträge</h3>
-                </div>");
-            return;
-        }
-
-        int seq = 1;
-        foreach (var g in list)
-        {
-            var createdAt = GetCreatedAt(g);
-            var comment = GetString(g, "Comment") ?? GetString(g, "comment");
-
-            builder.AddMarkupContent(seq++, $@"<div class=""card shadow-sm border-0 mb-3 request-card""><div class=""card-body p-4"">");
-
-            if (createdAt.HasValue)
-            {
-                builder.AddMarkupContent(seq++, $@"
-                    <div class=""d-flex justify-content-between mb-3 border-bottom pb-2"">
-                        <span class=""text-muted small""><i class=""bi bi-calendar3""></i> {createdAt.Value.ToLocalTime():dd.MM.yyyy}</span>
-                        <span class=""text-muted small""><i class=""bi bi-clock""></i> {createdAt.Value.ToLocalTime():HH:mm} Uhr</span>
-                    </div>");
-            }
-
-            builder.AddMarkupContent(seq++, $@"
-                <div class=""row align-items-center"">
-                    <div class=""col-md-8"">
-                        <span class=""badge bg-primary me-2"">{g.ModuleName}</span>
-                        <h4 class=""fw-bold mb-1"">{g.StudentName} <span class=""text-muted fw-normal fs-6"">({g.CourseName})</span></h4>
-                        <div class=""text-muted small mb-3"">Von: {g.TeacherName}</div>");
-
-            if (!string.IsNullOrWhiteSpace(comment))
-            {
-                builder.AddMarkupContent(seq++, $@"
-                        <div class=""mt-2 p-2 bg-body-tertiary border rounded small"">
-                            <strong>Bemerkung:</strong> {System.Net.WebUtility.HtmlEncode(comment)}
-                        </div>");
-            }
-
-            builder.AddMarkupContent(seq++, $@"
-                    </div>
-                    <div class=""col-md-4 text-center border-start-md"">
-                        <div class=""grade-badge mb-3 bg-success-subtle text-success border border-success"">{g.GradeValue}</div>");
-
-            if (showActions)
-            {
-                builder.AddMarkupContent(seq++, $@"
-                        <div class=""d-flex gap-2 w-100 justify-content-center"">
-                            <button class=""btn btn-outline-danger flex-grow-1"" onclick=""document.getElementById('hiddenReject_{g.Id}').click()"">Ablehnen</button>
-                            <button class=""btn btn-success flex-grow-1"" onclick=""document.getElementById('hiddenApprove_{g.Id}').click()"">Genehmigen</button>
-                        </div>
-                        <button id=""hiddenReject_{g.Id}"" style=""display:none""></button>
-                        <button id=""hiddenApprove_{g.Id}"" style=""display:none""></button>
-                    ");
-            }
-
-            builder.AddMarkupContent(seq++, "</div></div></div></div>");
-        }
-    };
-
-    // Reflection helpers (avoid compile errors if DTO missing props)
-    private static string? GetString(object obj, string prop)
-    {
-        var p = obj.GetType().GetProperty(prop, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-        return p?.GetValue(obj)?.ToString();
-    }
-
-    private static DateTime? GetCreatedAt(object obj)
-    {
-        var p = obj.GetType().GetProperty("CreatedAt", BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase)
-             ?? obj.GetType().GetProperty("created_at", BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-
-        var val = p?.GetValue(obj);
-        return val is DateTime dt ? dt : null;
-    }
-
-    private static int? TryGetInt(object obj, string prop)
-    {
-        var p = obj.GetType().GetProperty(prop, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-        var val = p?.GetValue(obj);
-        if (val is int i) return i;
-        if (val is long l) return (int)l;
-        if (val is null) return null;
-        if (int.TryParse(val.ToString(), out var parsed)) return parsed;
-        return null;
-    }
-
-    private static void SetPropertyIfExists(object obj, string propName, object? value)
-    {
-        var p = obj.GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-        if (p is null || !p.CanWrite) return;
-        p.SetValue(obj, value);
     }
 
     public class GradeFormModel
@@ -959,52 +1053,9 @@ else if (Role == "rektor")
         [Range(1, 6, ErrorMessage = "Die Note muss zwischen 1.0 und 6.0 liegen.")]
         public decimal GradeValue { get; set; } = 1m;
 
+        [Required(ErrorMessage = "Bitte einen Rektor auswählen.")]
         public int RektorId { get; set; }
 
         public string Comment { get; set; } = string.Empty;
     }
-
-    // This DTO must exist in your Shared.DTOs
-    public class UpdateGradeRequest
-    {
-        public string CourseName { get; set; } = "";
-        public decimal GradeValue { get; set; }
-        public string StudentName { get; set; } = "";
-        public string ModuleName { get; set; } = "";
-        public int RektorId { get; set; }
-        public string Comment { get; set; } = "";
-    }
 }
-
-<style>
-    nav.sticky-navbar {
-        position: sticky;
-        top: 0;
-        z-index: 5000 !important;
-        overflow: visible !important;
-        background-color: rgba(var(--bs-body-bg-rgb), 0.95);
-        backdrop-filter: blur(10px);
-    }
-
-    div.sticky-navbar {
-        position: sticky;
-        z-index: 3000 !important;
-        overflow: visible !important;
-        background-color: rgba(var(--bs-body-bg-rgb), 0.95);
-        backdrop-filter: blur(10px);
-    }
-
-    .navbar .dropdown-menu {
-        z-index: 6000 !important;
-    }
-
-    .navbar,
-    .navbar .container-fluid,
-    .navbar .dropdown {
-        overflow: visible !important;
-    }
-
-    [data-bs-theme="dark"] .navbar-brand img {
-        filter: invert(1) brightness(1.2);
-    }
-</style>
