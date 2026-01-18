@@ -33,6 +33,8 @@ public class GradeService : IGradeService
             module_name = request.ModuleName,
             student_name = request.StudentName,
             grade_value = request.GradeValue,
+            comment = string.IsNullOrWhiteSpace(request.Comment) ? null : request.Comment.Trim(),
+
 
             teacher_id = teacherId,
             rektor_id = request.RektorId,
@@ -134,6 +136,8 @@ public class GradeService : IGradeService
             ModuleName = g.module_name,
             StudentName = g.student_name,
             GradeValue = g.grade_value,
+            CreatedAt = g.created_at,
+            Comment = g.comment,
 
             TeacherName = g.teacher?.username ?? "",
             RektorName = g.rektor?.name ?? ""

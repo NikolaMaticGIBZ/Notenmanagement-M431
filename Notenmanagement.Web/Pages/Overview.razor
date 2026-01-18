@@ -30,6 +30,7 @@ else if (Role == "teacher")
                     <button class="btn dropdown-toggle"
                             type="button"
                             data-bs-toggle="dropdown"
+                            data-bs-display="static"
                             aria-expanded="false">
                         <i class="bi bi-link"></i>
                     </button>
@@ -153,28 +154,29 @@ else if (Role == "rektor")
                 <img src="https://www.edu.ch/media/wysiwyg/edu/schulen/gibz.png?v=1" alt="GIBZ Logo" height="40">
                 <span class="ms-2 fs-6 badge bg-dark text-white">PROREKTORAT</span>
             </a>
-            <div class="dropdown">
-                <button class="btn dropdown-toggle"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                    <i class="bi bi-link"></i>
-                </button>
+            <div class="d-flex align-items-center ms-auto gap-2">
+                <div class="dropdown">
+                    <button class="btn dropdown-toggle"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            data-bs-display="static"
+                            aria-expanded="false">
+                        <i class="bi bi-link"></i>
+                    </button>
 
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="https://www.zg.ch/behoerden/volkswirtschaftsdirektion/gibz"><i class="bi bi-house-door-fill"></i> | GIBZ Homepage</a></li>
-                    <li><a class="dropdown-item" href="https://moodle.gibz.ch/anmelden/"><i class="bi bi-list-task"></i> | Moodle</a></li>
-                    <li><a class="dropdown-item" href="https://gibz.sharepoint.com/"><i class="bi bi-bookmark-fill"></i> | Intranet</a></li>
-                    <li><a class="dropdown-item" href="https://gibz.zg.ch/"><i class="bi bi-person-workspace"></i> | schulNetz GIBZ</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="mailto:info@gibz.ch?subject=Notennachfrage%20GIBZ"><i class="bi bi-envelope-fill"></i> | Kontaktieren <br /> Sie Uns!</a></li>
-                </ul>
-            </div>
-            <div class="vr mx-2"></div>
-            <div class="d-flex ms-auto">
-                <a class="btn btn-outline-danger btn-sm" @onclick="Logout">
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="https://www.zg.ch/behoerden/volkswirtschaftsdirektion/gibz"><i class="bi bi-house-door-fill"></i> | GIBZ Homepage</a></li>
+                        <li><a class="dropdown-item" href="https://moodle.gibz.ch/anmelden/"><i class="bi bi-list-task"></i> | Moodle</a></li>
+                        <li><a class="dropdown-item" href="https://gibz.sharepoint.com/"><i class="bi bi-bookmark-fill"></i> | Intranet</a></li>
+                        <li><a class="dropdown-item" href="https://gibz.zg.ch/"><i class="bi bi-person-workspace"></i> | schulNetz GIBZ</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="mailto:info@gibz.ch?subject=Notennachfrage%20GIBZ"><i class="bi bi-envelope-fill"></i> | Kontaktieren <br /> Sie Uns!</a></li>
+                    </ul>
+                </div>
+                <div class="vr mx-2"></div>
+                <button class="btn btn-outline-danger btn-sm" @onclick="Logout">
                     <i class="bi bi-box-arrow-right"></i> Logout
-                </a>
+                </button>
             </div>
         </div>
     </nav>
@@ -238,8 +240,12 @@ else if (Role == "rektor")
                                 if (createdAt.HasValue)
                                 {
                                     <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
-                                        <span class="text-muted small"><i class="bi bi-calendar3"></i> @createdAt.Value.ToLocalTime().ToString("dd.MM.yyyy")</span>
-                                        <span class="text-muted small"><i class="bi bi-clock"></i> @createdAt.Value.ToLocalTime().ToString("HH:mm") Uhr</span>
+                                        <span class="text-muted small">
+                                            <i class="bi bi-calendar3"></i> @g.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                                        </span>
+                                        <span class="text-muted small">
+                                            <i class="bi bi-clock"></i> @g.CreatedAt.ToLocalTime().ToString("HH:mm") Uhr
+                                        </span>
                                     </div>
                                 }
                             }
@@ -251,6 +257,12 @@ else if (Role == "rektor")
                                         @g.StudentName <span class="text-muted fw-normal fs-6">(@g.CourseName)</span>
                                     </h4>
                                     <div class="text-muted small mb-3">Von: @g.TeacherName</div>
+                                    @if (!string.IsNullOrWhiteSpace(g.Comment))
+                                    {
+                                        <div class="mt-2 p-2 bg-light border rounded small">
+                                            <strong>Bemerkung:</strong> @g.Comment
+                                        </div>
+                                    }
                                 </div>
 
                                 <div class="col-md-4 text-center border-start-md">
@@ -623,14 +635,27 @@ else if (Role == "rektor")
 }
 
 <style>
-    .sticky-navbar {
+    nav.sticky-navbar {
         position: sticky;
         top: 0;
-        z-index: 1020;
-        background-color: var(--bs-body-bg);
+        z-index: 5000 !important;
+        overflow: visible !important;
     }
 
-    .content-padding {
-        padding-top: 100px; /* Dynamische Höhe für Header + Tabs */
+    div.sticky-navbar {
+        position: sticky;
+        z-index: 3000 !important;
+        overflow: visible !important;
     }
+
+    .navbar .dropdown-menu {
+        z-index: 6000 !important;
+    }
+
+    .navbar,
+    .navbar .container-fluid,
+    .navbar .dropdown {
+        overflow: visible !important;
+    }
+
 </style>

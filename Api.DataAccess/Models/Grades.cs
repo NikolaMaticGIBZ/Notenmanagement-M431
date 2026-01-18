@@ -53,4 +53,8 @@ public class Grades
     [Column("prorektor_id")]
     [ForeignKey(nameof(prorektor))]
     public int? prorektor_id { get; set; }
+
+    [Column("comment")]
+    [MaxLength(1000)]
+    public string? comment { get; set; }
 }

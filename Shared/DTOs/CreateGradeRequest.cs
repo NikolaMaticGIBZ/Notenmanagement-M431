@@ -13,4 +13,6 @@ public class CreateGradeRequest
     public string StudentName { get; set; } = string.Empty;
     public string ModuleName { get; set; } = string.Empty;
     public int RektorId { get; set; }
+    public string? Comment { get; set; }
+
 }

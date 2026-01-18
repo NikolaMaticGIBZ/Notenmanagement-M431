@@ -20,5 +20,6 @@ public class GradeResponse
 
     public string Status { get; set; } = "pending";   
     public DateTime CreatedAt { get; set; }           
-    public string? DecisionNote { get; set; }         
+    public string? DecisionNote { get; set; }
+    public string? Comment { get; set; }
 }

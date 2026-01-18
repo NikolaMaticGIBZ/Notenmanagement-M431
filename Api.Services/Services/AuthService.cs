@@ -14,7 +14,7 @@ public class AuthService : IAuthService
         _authRepository = authRepository;
     }
 
-    public async Task<Users?> RegisterAsync(RegisterRequest request)
+    public async Task< Users?> RegisterAsync(RegisterRequest request)
     {
         return await _authRepository.RegisterAsync(request);
     }
