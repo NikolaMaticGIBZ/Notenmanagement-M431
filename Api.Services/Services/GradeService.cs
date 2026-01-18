@@ -125,22 +125,58 @@ public class GradeService : IGradeService
         return true;
     }
 
-    private static GradeResponse MapToResponse(Grades g)
+    private static GradeResponse MapToResponse(Grades g) => new()
     {
-        // NOTE: Add these properties to GradeResponse if you want them in the UI:
-        // Status, CreatedAt, DecisionNote, RektorId
-        return new GradeResponse
-        {
-            Id = g.id,
-            CourseName = g.course_name,
-            ModuleName = g.module_name,
-            StudentName = g.student_name,
-            GradeValue = g.grade_value,
-            CreatedAt = g.created_at,
-            Comment = g.comment,
+        Id = g.id,
+        CourseName = g.course_name,
+        ModuleName = g.module_name,
+        StudentName = g.student_name,
+        GradeValue = g.grade_value,
 
-            TeacherName = g.teacher?.username ?? "",
-            RektorName = g.rektor?.name ?? ""
-        };
+        TeacherName = g.teacher?.username ?? "",
+        RektorName = g.rektor?.name ?? "",
+
+        Status = g.status,
+        CreatedAt = g.created_at,
+        Comment = g.comment,
+        DecisionNote = g.decision_note
+    };
+    public async Task<List<GradeResponse>> GetMyGradesAsync(int teacherId)
+    {
+        var grades = await _db.Grades
+            .Include(g => g.teacher)
+            .Include(g => g.rektor)
+            .Where(g => g.teacher_id == teacherId)
+            .OrderByDescending(g => g.created_at)
+            .ToListAsync();
+
+        return grades.Select(MapToResponse).ToList();
     }
+
+    public async Task<bool> UpdateMyGradeAsync(int gradeId, int teacherId, UpdateGradeRequest request)
+    {
+        var grade = await _db.Grades.FirstOrDefaultAsync(g => g.id == gradeId && g.teacher_id == teacherId);
+        if (grade == null) return false;
+
+        // only editable if pending
+        if (!string.Equals(grade.status, "pending", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        // validate rektor exists (optional but good)
+        var rektorExists = await _db.Rektors.AnyAsync(r => r.id == request.RektorId);
+        if (!rektorExists) throw new InvalidOperationException("Rektor not found.");
+
+        grade.course_name = request.CourseName;
+        grade.module_name = request.ModuleName;
+        grade.student_name = request.StudentName;
+        grade.grade_value = request.GradeValue;
+        grade.rektor_id = request.RektorId;
+
+        // store teacher comment (make sure your Grades entity has comment column)
+        grade.comment = string.IsNullOrWhiteSpace(request.Comment) ? null : request.Comment.Trim();
+
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
 }

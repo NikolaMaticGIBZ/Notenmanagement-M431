@@ -72,4 +72,40 @@ public class GradesController : ControllerBase
         if (!success) return NotFound();
         return NoContent();
     }
+
+    [HttpGet("mine")]
+    [Authorize(Roles = "teacher")]
+    public async Task<IActionResult> GetMine()
+    {
+        var sub =
+            User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub") ??
+            User.FindFirstValue("id");
+
+        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out var teacherId))
+            return Unauthorized("JWT does not contain a valid user id (sub).");
+
+        var result = await _gradesService.GetMyGradesAsync(teacherId);
+        return Ok(result);
+    }
+
+    [HttpPut("{id:int}")]
+    [Authorize(Roles = "teacher")]
+    public async Task<IActionResult> UpdateMine(int id, [FromBody] UpdateGradeRequest request)
+    {
+        var sub =
+            User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub") ??
+            User.FindFirstValue("id");
+
+        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out var teacherId))
+            return Unauthorized("JWT does not contain a valid user id (sub).");
+
+        var ok = await _gradesService.UpdateMyGradeAsync(id, teacherId, request);
+        if (!ok) return NotFound(); // not found OR not owned OR not pending
+        return NoContent();
+    }
+
 }
