@@ -101,3 +101,12 @@ a, .btn-link {
 code {
     color: #c02d76;
 }
+
+[data-bs-theme="dark"] .navbar-brand img {
+    filter: invert(1) brightness(1.2);
+}
+
+.navbar {
+    background-color: var(--bs-body-bg) !important;
+    backdrop-filter: none !important;
+}
