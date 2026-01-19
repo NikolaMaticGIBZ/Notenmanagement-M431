@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Shared.DTOs;
 
-namespace Shared.DTOs;
-
+/// <summary>
+/// DTO for veryfing a 2FA request
+/// </summary>
 public class Verify2FARequest
 {
     public int UserId { get; set; }

@@ -3,62 +3,73 @@ using Api.DataAccess.Interfaces;
 using Api.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
 using Shared.DTOs;
-using System.Security.Cryptography;
-using System.Text;
 
-
+/// <summary>
+/// Repository for Authentication
+/// </summary>
 public class AuthRepository : IAuthRepository
 {
     private readonly AppDBContext _context;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthRepository"/> class.
+    /// </summary>
+    /// <param name="context">The context.</param>
     public AuthRepository(AppDBContext context)
     {
         _context = context;
     }
 
-    public async Task<Users?> RegisterAsync(RegisterRequest request)
+    /// <inheritdoc/>
+    public async Task<User?> RegisterAsync(RegisterRequest request)
     {
-        bool exists = await _context.Users.AnyAsync(u =>
-            u.email == request.Email || u.username == request.Username);
+        bool exists = await _context.User.AnyAsync(u =>
+            u.Email == request.Email || u.Username == request.Username);
 
         if (exists)
             return null;
 
-        var user = new Users
+        var user = new User
         {
-            username = request.Username,
-            email = request.Email,
-            password_hash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+            Username = request.Username,
+            Email = request.Email,
+            Password_hash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            Role = request.Role
         };
 
-        _context.Users.Add(user);
+        _context.User.Add(user);
         await _context.SaveChangesAsync();
 
         return user;
     }
 
-    public async Task<Users?> LoginAsync(LoginRequest request)
+    /// <inheritdoc/>
+    public async Task<User?> LoginAsync(LoginRequest request)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.email == request.Email);
+        var user = await _context.User
+            .FirstOrDefaultAsync(u => u.Email == request.Email);
 
         if (user == null)
             return null;
 
         bool validPassword = BCrypt.Net.BCrypt.Verify(
             request.Password,
-            user.password_hash
+            user.Password_hash
         );
 
         if (!validPassword)
             return null;
         return user;
     }
-    public async Task<Users?> GetByIdAsync(int id)
+
+    /// <inheritdoc/>
+    public async Task<User?> GetByIdAsync(int id)
     {
-        return await _context.Users
-            .FirstOrDefaultAsync(u => u.id == id);
+        return await _context.User
+            .FirstOrDefaultAsync(u => u.Id == id);
     }
+
+    /// <inheritdoc/>
     public async Task SaveAsync()
     {
         await _context.SaveChangesAsync();

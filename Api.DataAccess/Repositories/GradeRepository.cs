@@ -2,52 +2,64 @@
 using Api.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
 
-
 namespace Api.DataAccess.Repositories;
 
+/// <summary>
+/// Repository for grades
+/// </summary>
+/// <seealso cref="Api.DataAccess.Interfaces.IGradesRepository" />
 public class GradeRepository : IGradesRepository
 {
     private readonly AppDBContext _context;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GradeRepository"/> class.
+    /// </summary>
+    /// <param name="context">The context.</param>
     public GradeRepository(AppDBContext context)
     {
         _context = context;
     }
 
-    public async Task<Grades> CreateAsync(Grades grade)
+    /// <inheritdoc/>
+    public async Task<Grade> CreateAsync(Grade grade)
     {
-        _context.Grades.Add(grade);
+        _context.Grade.Add(grade);
         await _context.SaveChangesAsync();
         return grade;
     }
 
-    public async Task<IEnumerable<Grades>> GetAllAsync()
+    /// <inheritdoc/>
+    public async Task<IEnumerable<Grade>> GetAllAsync()
     {
-        return await _context.Grades
-            .Include(g => g.teacher)
-            .Include(g => g.rektor)
+        return await _context.Grade
+            .Include(g => g.Teacher)
+            .Include(g => g.Rektor)
             .ToListAsync();
     }
 
-    public async Task<Grades?> GetByIdAsync(int id)
+    /// <inheritdoc/>
+    public async Task<Grade?> GetByIdAsync(int id)
     {
-        return await _context.Grades
-            .Include(g => g.teacher)
-            .Include(g => g.rektor)
-            .FirstOrDefaultAsync(g => g.id == id);
+        return await _context.Grade
+            .Include(g => g.Teacher)
+            .Include(g => g.Rektor)
+            .FirstOrDefaultAsync(g => g.Id == id);
     }
 
-    public async Task<bool> UpdateAsync(Grades grade)
+    /// <inheritdoc/>
+    public async Task<bool> UpdateAsync(Grade grade)
     {
-        _context.Grades.Update(grade);
+        _context.Grade.Update(grade);
         return await _context.SaveChangesAsync() > 0;
     }
 
+    /// <inheritdoc/>
     public async Task<bool> DeleteAsync(int id)
     {
-        var grade = await _context.Grades.FindAsync(id);
+        var grade = await _context.Grade.FindAsync(id);
         if (grade == null) return false;
-        _context.Grades.Remove(grade);
+        _context.Grade.Remove(grade);
         return await _context.SaveChangesAsync() > 0;
     }
 }

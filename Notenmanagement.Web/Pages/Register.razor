@@ -1,17 +1,27 @@
 ﻿@page "/register"
-@inject HttpClient Http
-@inject NavigationManager NavManager
-@inject IJSRuntime JS
 
 <PageTitle>Registrierung</PageTitle>
 
-<nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
+<nav class="navbar navbar-expand-lg border-bottom shadow-sm @(IsDark ? "bg-dark navbar-dark" : "bg-white")">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">
             <img src="https://www.edu.ch/media/wysiwyg/edu/schulen/gibz.png?v=1" alt="GIBZ Logo" height="40">
         </a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav ms-auto">
+
+        <div class="d-flex align-items-center ms-auto gap-2">
+            <!-- Theme toggle -->
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       checked="@IsDark"
+                       @onchange="ToggleTheme" />
+                <label class="form-check-label small ms-1">
+                    <i class="bi @(IsDark ? "bi-moon-stars-fill" : "bi-sun-fill")"></i>
+                </label>
+            </div>
+
+            <div class="vr mx-2"></div>
+
+            <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link active fw-bold" href="register">
                         <i class="bi bi-person-add"></i> Registrieren
@@ -26,29 +36,28 @@
         </div>
     </div>
 </nav>
-
-<div class="container py-5">
+<div class="container py-5 @(IsDark ? "text-light" : "text-dark")">
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-5">
 
             <div class="text-center mb-4">
-                <h2 class="fw-bold text-primary">Noten-Manager</h2>
+                <h2 class="fw-bold @(IsDark ? "text-primary text-opacity-75" : "text-primary")">Noten-Manager</h2>
                 <p class="text-muted">Erstellen Sie einen neuen Account</p>
             </div>
 
-            <div class="card shadow border-0 rounded-3">
+            <div class="card shadow border-0 rounded-3 @(IsDark ? "bg-dark text-light" : "")">
                 <div class="card-body p-4">
                     <h4 class="card-title text-center mb-4">Registrierung</h4>
 
-                    <form @onsubmit="HandleRegister">
+                    <form @onsubmit="HandleRegister" @onsubmit:preventDefault>
                         <div class="mb-3">
                             <label class="form-label">Benutzername</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light">
+                                <span class="input-group-text @(IsDark ? "bg-secondary text-light" : "bg-light")">
                                     <i class="bi bi-person"></i>
                                 </span>
                                 <input type="text"
-                                       class="form-control"
+                                       class="form-control @(IsDark ? "bg-secondary text-light border-light" : "")"
                                        @bind="Username"
                                        required />
                             </div>
@@ -57,11 +66,11 @@
                         <div class="mb-3">
                             <label class="form-label">E-Mail Adresse</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light">
+                                <span class="input-group-text @(IsDark ? "bg-secondary text-light" : "bg-light")">
                                     <i class="bi bi-envelope"></i>
                                 </span>
                                 <input type="email"
-                                       class="form-control"
+                                       class="form-control @(IsDark ? "bg-secondary text-light border-light" : "")"
                                        @bind="Email"
                                        required />
                             </div>
@@ -70,11 +79,11 @@
                         <div class="mb-3">
                             <label class="form-label">Passwort</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light">
+                                <span class="input-group-text @(IsDark ? "bg-secondary text-light" : "bg-light")">
                                     <i class="bi bi-lock"></i>
                                 </span>
                                 <input type="password"
-                                       class="form-control"
+                                       class="form-control @(IsDark ? "bg-secondary text-light border-light" : "")"
                                        @bind="Password"
                                        required />
                             </div>
@@ -93,12 +102,21 @@
                             @ErrorMessage
                         </div>
                     }
+                    @if (!string.IsNullOrEmpty(SuccessMessage))
+                    {
+                        <div class="alert mt-3 text-center
+                        @(IsDark
+                                                                              ? "alert-primary bg-dark text-info border-info"
+                                                                              : "alert-primary bg-light text-primary border-primary")">
+                        @SuccessMessage
+                    </div>
+                                        }
                 </div>
 
-                <div class="card-footer text-center py-3 bg-light border-0 rounded-bottom-3">
+                <div class="card-footer text-center py-3 @(IsDark ? "bg-secondary text-light" : "bg-light") border-0 rounded-bottom-3">
                     <small>
                         Bereits einen Account?
-                        <a href="/" class="text-decoration-none">
+                        <a href="/" class="text-decoration-none @(IsDark ? "text-info" : "")">
                             Hier einloggen
                         </a>
                     </small>
@@ -108,56 +126,3 @@
         </div>
     </div>
 </div>
-
-@code {
-    private string Username { get; set; } = string.Empty;
-    private string Email { get; set; } = string.Empty;
-    private string Password { get; set; } = string.Empty;
-    private string ErrorMessage { get; set; } = string.Empty;
-
-    protected override async Task OnInitializedAsync()
-    {
-        if (await AuthHelper.IsLoggedIn(JS))
-        {
-            NavManager.NavigateTo("/overview", true);
-        }
-    }
-
-    private async Task HandleRegister()
-    {
-        ErrorMessage = string.Empty;
-
-        var email = Email.ToLower().Trim();
-
-        if (!email.EndsWith("@gibz.ch") && !email.EndsWith("@zg.ch") && !email.EndsWith("@hotmail.com") && !email.EndsWith("@gmail.com"))
-        {
-            ErrorMessage = "Bitte verwenden Sie eine gültige Email-Adresse.";
-            return;
-        }
-
-        var request = new Shared.DTOs.RegisterRequest
-        {
-            Username = Username,
-            Email = Email,
-            Password = Password
-        };
-
-        try
-        {
-            var response = await Http.PostAsJsonAsync("api/auth/register", request);
-
-            if (response.IsSuccessStatusCode)
-            {
-                NavManager.NavigateTo("/");
-            }
-            else
-            {
-                ErrorMessage = await response.Content.ReadAsStringAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = "Registration failed! Try again.";
-        }
-    }
-}

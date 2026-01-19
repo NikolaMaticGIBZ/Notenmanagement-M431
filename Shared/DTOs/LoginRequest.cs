@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Shared.DTOs;
 
-namespace Shared.DTOs;
-
+/// <summary>
+/// DTO for a login request
+/// </summary>
 public class LoginRequest
 {
     public string Email { get; set; } = string.Empty;

@@ -7,10 +7,10 @@ namespace Api.DataAccess.Models;
 public class Rektor
 {
     [Key]
-    public int id { get; set; }
+    public int Id { get; set; }
 
     [MaxLength(255)]
-    public string name { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 
-    public ICollection<Grades> Grades { get; set; } = new List<Grades>();
+    public ICollection<Grade> Grades { get; set; } = new List<Grade>();
 }

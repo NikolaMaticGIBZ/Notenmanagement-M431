@@ -1,35 +1,44 @@
 ﻿using Api.DataAccess.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Api.Services.Services;
 
+/// <summary>
+/// Service for Json Web Token handling
+/// </summary>
 public class JwtService
 {
     private readonly IConfiguration _config;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JwtService"/> class.
+    /// </summary>
+    /// <param name="config">The configuration.</param>
     public JwtService(IConfiguration config)
     {
         _config = config;
     }
 
-    public string GenerateToken(Users user, string role)
+    /// <summary>
+    /// Generates a jwt token.
+    /// </summary>
+    /// <param name="user">The user model.</param>
+    /// <param name="role">The role.</param>
+    /// <returns>Returns the jwt token as a string</returns>
+    public string GenerateToken(User user, string role)
     {
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.email),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(ClaimTypes.Role, role)
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var expires = DateTime.UtcNow.AddMinutes(double.Parse(_config["Jwt:ExpiresMinutes"]!));

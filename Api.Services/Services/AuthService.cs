@@ -5,21 +5,31 @@ using Shared.DTOs;
 
 namespace Api.Services.Services;
 
+/// <summary>
+/// Service for Authentication
+/// </summary>
+/// <seealso cref="Api.Services.Interfaces.IAuthService" />
 public class AuthService : IAuthService
 {
     private readonly IAuthRepository _authRepository;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthService"/> class.
+    /// </summary>
+    /// <param name="authRepository">The authentication repository.</param>
     public AuthService(IAuthRepository authRepository)
     {
         _authRepository = authRepository;
     }
 
-    public async Task< Users?> RegisterAsync(RegisterRequest request)
+    /// <inheritdoc/>
+    public async Task<User?> RegisterAsync(RegisterRequest request)
     {
         return await _authRepository.RegisterAsync(request);
     }
 
-    public async Task<Users?> LoginAsync(LoginRequest request)
+    /// <inheritdoc/>
+    public async Task<User?> LoginAsync(LoginRequest request)
     {
         return await _authRepository.LoginAsync(request);
     }

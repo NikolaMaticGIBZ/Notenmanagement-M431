@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Shared.DTOs;
 
-namespace Shared.DTOs;
-
+/// <summary>
+/// DTO for creating a grade request
+/// </summary>
 public class CreateGradeRequest
 {
     public string CourseName { get; set; } = string.Empty;
@@ -14,5 +11,4 @@ public class CreateGradeRequest
     public string ModuleName { get; set; } = string.Empty;
     public int RektorId { get; set; }
     public string? Comment { get; set; }
-
 }

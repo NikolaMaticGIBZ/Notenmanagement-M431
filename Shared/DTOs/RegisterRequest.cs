@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Shared.DTOs;
 
-namespace Shared.DTOs;
-
+/// <summary>
+/// DTO for a register request
+/// </summary>
 public class RegisterRequest
 {
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+
+    public string Role { get; set; } = string.Empty;
 }

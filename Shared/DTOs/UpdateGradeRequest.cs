@@ -1,5 +1,8 @@
 ﻿namespace Shared.DTOs;
 
+/// <summary>
+/// DTO for updating a grade request
+/// </summary>
 public class UpdateGradeRequest
 {
     public string CourseName { get; set; } = string.Empty;

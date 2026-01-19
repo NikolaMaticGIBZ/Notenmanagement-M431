@@ -6,63 +6,73 @@ using Shared.DTOs;
 
 namespace Api.Services.Services;
 
+/// <summary>
+/// Service for grades
+/// </summary>
+/// <seealso cref="Api.Services.Interfaces.IGradeService" />
 public class GradeService : IGradeService
 {
     private readonly AppDBContext _db;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GradeService"/> class.
+    /// </summary>
+    /// <param name="db">The database.</param>
     public GradeService(AppDBContext db)
     {
         _db = db;
     }
 
+    /// <inheritdoc/>
     public async Task<GradeResponse> CreateGradeAsync(CreateGradeRequest request, int teacherId)
     {
         // Validate teacher exists
-        var teacher = await _db.Users.FirstOrDefaultAsync(u => u.id == teacherId);
+        var teacher = await _db.User.FirstOrDefaultAsync(u => u.Id == teacherId);
         if (teacher == null)
-            throw new InvalidOperationException("Teacher not found.");
+            throw new InvalidOperationException("Lehrer nicht gefunden.");
 
         // Validate rektor exists
-        var rektor = await _db.Rektors.FirstOrDefaultAsync(r => r.id == request.RektorId);
+        var rektor = await _db.Rektor.FirstOrDefaultAsync(r => r.Id == request.RektorId);
         if (rektor == null)
-            throw new InvalidOperationException("Rektor not found.");
+            throw new InvalidOperationException("Prorektor nocht gefunden.");
 
-        var entity = new Grades
+        var entity = new Grade
         {
-            course_name = request.CourseName,
-            module_name = request.ModuleName,
-            student_name = request.StudentName,
-            grade_value = request.GradeValue,
-            comment = string.IsNullOrWhiteSpace(request.Comment) ? null : request.Comment.Trim(),
+            Course_name = request.CourseName,
+            Module_name = request.ModuleName,
+            Student_name = request.StudentName,
+            Grade_value = request.GradeValue,
+            Comment = string.IsNullOrWhiteSpace(request.Comment) ? null : request.Comment.Trim(),
 
 
-            teacher_id = teacherId,
-            rektor_id = request.RektorId,
+            Teacher_id = teacherId,
+            Rektor_id = request.RektorId,
 
             // workflow defaults
-            status = "pending",
-            created_at = DateTime.UtcNow,
-            decision_note = null,
+            Status = "pending",
+            Created_at = DateTime.UtcNow,
+            Decision_note = null,
             prorektor_id = null
         };
 
-        _db.Grades.Add(entity);
+        _db.Grade.Add(entity);
         await _db.SaveChangesAsync();
 
         // Reload with navigation props for names
-        var saved = await _db.Grades
-            .Include(g => g.teacher)
-            .Include(g => g.rektor)
-            .FirstAsync(g => g.id == entity.id);
+        var saved = await _db.Grade
+            .Include(g => g.Teacher)
+            .Include(g => g.Rektor)
+            .FirstAsync(g => g.Id == entity.Id);
 
         return MapToResponse(saved);
     }
 
+    /// <inheritdoc/>
     public async Task<List<GradeResponse>> GetGradesAsync(string? status)
     {
-        var query = _db.Grades
-            .Include(g => g.teacher)
-            .Include(g => g.rektor)
+        var query = _db.Grade
+            .Include(g => g.Teacher)
+            .Include(g => g.Rektor)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(status))
@@ -73,127 +83,129 @@ public class GradeService : IGradeService
             if (s is not ("pending" or "approved" or "rejected"))
                 return new List<GradeResponse>();
 
-            query = query.Where(g => g.status.ToLower() == s);
+            query = query.Where(g => g.Status.ToLower() == s);
         }
 
         var grades = await query
-            .OrderByDescending(g => g.created_at)
+            .OrderByDescending(g => g.Created_at)
             .ToListAsync();
 
         return grades.Select(MapToResponse).ToList();
     }
 
+    /// <inheritdoc/>
     public async Task<GradeResponse?> GetByIdAsync(int id)
     {
-        var grade = await _db.Grades
-            .Include(g => g.teacher)
-            .Include(g => g.rektor)
-            .FirstOrDefaultAsync(g => g.id == id);
+        var grade = await _db.Grade
+            .Include(g => g.Teacher)
+            .Include(g => g.Rektor)
+            .FirstOrDefaultAsync(g => g.Id == id);
 
         if (grade == null) return null;
 
         return MapToResponse(grade);
     }
 
+    /// <inheritdoc/>
     public async Task<bool> DecideAsync(int gradeId, string status, string? decisionNote)
     {
-        var grade = await _db.Grades.FirstOrDefaultAsync(g => g.id == gradeId);
+        var grade = await _db.Grade.FirstOrDefaultAsync(g => g.Id == gradeId);
         if (grade == null) return false;
 
         var s = status?.Trim().ToLower();
         if (s is not ("approved" or "rejected"))
             throw new ArgumentException("Status must be 'approved' or 'rejected'.");
 
-        grade.status = s;
-        grade.decision_note = string.IsNullOrWhiteSpace(decisionNote) ? null : decisionNote.Trim();
-
-        // Optional: store who decided (requires prorektor_id + JWT sub in controller)
-        // You can pass prorektorId into DecideAsync if you want to save it.
-        // grade.prorektor_id = prorektorId;
+        grade.Status = s;
+        grade.Decision_note = string.IsNullOrWhiteSpace(decisionNote) ? null : decisionNote.Trim();
 
         await _db.SaveChangesAsync();
         return true;
     }
 
+    /// <inheritdoc/>
     public async Task<bool> DeleteGradeAsync(int id)
     {
-        var grade = await _db.Grades.FirstOrDefaultAsync(g => g.id == id);
+        var grade = await _db.Grade.FirstOrDefaultAsync(g => g.Id == id);
         if (grade == null) return false;
 
-        _db.Grades.Remove(grade);
+        _db.Grade.Remove(grade);
         await _db.SaveChangesAsync();
         return true;
     }
 
-    private static GradeResponse MapToResponse(Grades g) => new()
-    {
-        Id = g.id,
-        CourseName = g.course_name,
-        ModuleName = g.module_name,
-        StudentName = g.student_name,
-        GradeValue = g.grade_value,
-
-        TeacherName = g.teacher?.username ?? "",
-        RektorName = g.rektor?.name ?? "",
-
-        Status = g.status,
-        CreatedAt = g.created_at,
-        Comment = g.comment,
-        DecisionNote = g.decision_note
-    };
+    /// <inheritdoc/>
     public async Task<List<GradeResponse>> GetMyGradesAsync(int teacherId)
     {
-        var grades = await _db.Grades
-            .Include(g => g.teacher)
-            .Include(g => g.rektor)
-            .Where(g => g.teacher_id == teacherId)
-            .OrderByDescending(g => g.created_at)
+        var grades = await _db.Grade
+            .Include(g => g.Teacher)
+            .Include(g => g.Rektor)
+            .Where(g => g.Teacher_id == teacherId)
+            .OrderByDescending(g => g.Created_at)
             .ToListAsync();
 
         return grades.Select(MapToResponse).ToList();
     }
 
+    /// <inheritdoc/>
     public async Task<bool> UpdateMyGradeAsync(int gradeId, int teacherId, UpdateGradeRequest request)
     {
-        var grade = await _db.Grades.FirstOrDefaultAsync(g => g.id == gradeId && g.teacher_id == teacherId);
+        var grade = await _db.Grade.FirstOrDefaultAsync(g => g.Id == gradeId && g.Teacher_id == teacherId);
         if (grade == null) return false;
 
         // only editable if pending
-        if (!string.Equals(grade.status, "pending", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(grade.Status, "pending", StringComparison.OrdinalIgnoreCase))
             return false;
 
         // validate rektor exists (optional but good)
-        var rektorExists = await _db.Rektors.AnyAsync(r => r.id == request.RektorId);
-        if (!rektorExists) throw new InvalidOperationException("Rektor not found.");
+        var rektorExists = await _db.Rektor.AnyAsync(r => r.Id == request.RektorId);
+        if (!rektorExists) throw new InvalidOperationException("Prorektor nicht gefunden.");
 
-        grade.course_name = request.CourseName;
-        grade.module_name = request.ModuleName;
-        grade.student_name = request.StudentName;
-        grade.grade_value = request.GradeValue;
-        grade.rektor_id = request.RektorId;
+        grade.Course_name = request.CourseName;
+        grade.Module_name = request.ModuleName;
+        grade.Student_name = request.StudentName;
+        grade.Grade_value = request.GradeValue;
+        grade.Rektor_id = request.RektorId;
 
         // store teacher comment (make sure your Grades entity has comment column)
-        grade.comment = string.IsNullOrWhiteSpace(request.Comment) ? null : request.Comment.Trim();
+        grade.Comment = string.IsNullOrWhiteSpace(request.Comment) ? null : request.Comment.Trim();
 
         await _db.SaveChangesAsync();
         return true;
     }
 
+    /// <inheritdoc/>
     public async Task<bool> DeleteMyGradeAsync(int id, int teacherId)
     {
-        var grade = await _db.Grades.FirstOrDefaultAsync(g => g.id == id);
+        var grade = await _db.Grade.FirstOrDefaultAsync(g => g.Id == id);
         if (grade == null) return false;
 
         // must be owner
-        if (grade.teacher_id != teacherId) return false;
+        if (grade.Teacher_id != teacherId) return false;
 
         // only allow delete while pending
-        if (!string.Equals(grade.status, "pending", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(grade.Status, "pending", StringComparison.OrdinalIgnoreCase))
             return false;
 
-        _db.Grades.Remove(grade);
+        _db.Grade.Remove(grade);
         await _db.SaveChangesAsync();
         return true;
     }
 
+    private static GradeResponse MapToResponse(Grade g) => new()
+    {
+        Id = g.Id,
+        CourseName = g.Course_name,
+        ModuleName = g.Module_name,
+        StudentName = g.Student_name,
+        GradeValue = g.Grade_value,
+
+        TeacherName = g.Teacher?.Username ?? "",
+        RektorName = g.Rektor?.Name ?? "",
+
+        Status = g.Status,
+        CreatedAt = g.Created_at,
+        Comment = g.Comment,
+        DecisionNote = g.Decision_note
+    };
 }

@@ -1,24 +1,28 @@
 ﻿using Api.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Mail;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Api.Services.Services;
 
+/// <summary>
+/// Service for sending Emails with Google SMTP
+/// </summary>
+/// <seealso cref="Api.Services.Interfaces.IEmailService" />
 public class EmailService : IEmailService
 {
     private readonly IConfiguration _config;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EmailService"/> class.
+    /// </summary>
+    /// <param name="config">The configuration.</param>
     public EmailService(IConfiguration config)
     {
         _config = config;
     }
 
+    /// <inheritdoc/>
     public async Task SendAsync(string to, string subject, string body)
     {
         var smtp = new SmtpClient(_config["Smtp:Host"])
@@ -42,5 +46,4 @@ public class EmailService : IEmailService
 
         await smtp.SendMailAsync(mail);
     }
-    
 }
