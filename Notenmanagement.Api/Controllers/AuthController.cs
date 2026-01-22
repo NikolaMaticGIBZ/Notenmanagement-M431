@@ -51,13 +51,9 @@ public class AuthController : ControllerBase
         {
             role = "rektor";
         }
-        else if (email.EndsWith("@hotmail.com"))
+        else if (email.EndsWith("@hotmail.com")) // @hotmail.com for testing purposes
         {
             role = "teacher";
-        }
-        else if (email.EndsWith("@gmail.com"))
-        {
-            role = "rektor";
         }
         else
         {
@@ -104,7 +100,7 @@ public class AuthController : ControllerBase
             $"Ihr 2FA-Code lautet: {code}\nGültig für 5 Minuten."
         );
 
-        // TODO: per Mail senden
+        
         Console.WriteLine($"[2FA CODE für {user.Email}]: {code}");
 
         return Ok(new

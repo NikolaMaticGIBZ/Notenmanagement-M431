@@ -19,7 +19,7 @@ public partial class TwoFactor : ComponentBase
     private bool isLoading = false;
     private string Code { get; set; } = string.Empty;
     private string ErrorMessage { get; set; } = string.Empty;
-    private int UserId { get; set; } // UserId als int
+    private int UserId { get; set; }
 
     private bool isResending = false;
     private string ResendMessage { get; set; } = string.Empty;

@@ -38,30 +38,30 @@ public partial class Overview : ComponentBase
     private string RektorValidationMessage { get; set; } = string.Empty;
 
     // ================= TEACHER STATE =================
-    private string teacherTab = "new"; // "new" | "mine"
-    private string myTab = "pending";  // "pending" | "approved" | "rejected"
+    private string teacherTab = "new"; 
+    private string myTab = "pending";  
 
     private List<GradeResponse> MyGrades = new();
     private List<GradeResponse> MyPending => MyGrades.Where(x => x.Status == "pending").ToList();
     private List<GradeResponse> MyApproved => MyGrades.Where(x => x.Status == "approved").ToList();
     private List<GradeResponse> MyRejected => MyGrades.Where(x => x.Status == "rejected").ToList();
 
-    // teacher edit modal
+    
     private bool showEditModal = false;
     private GradeResponse? editGrade;
     private UpdateGradeRequest editForm = new();
     private string editError = "";
 
     // ================= REKTOR STATE =================
-    private string activeTab = "pending"; // wird im rektor-Markup benutzt
+    private string activeTab = "pending";
 
     private List<GradeResponse> PendingGrades = new();
     private List<GradeResponse> ApprovedGrades = new();
     private List<GradeResponse> RejectedGrades = new();
 
-    // rektor decision modal (NEU)
+    
     private bool showModal = false;
-    private string modalType = "";     // "approved" | "rejected"
+    private string modalType = "";
     private int selectedGradeId;
     private string decisionNote = "";
 
@@ -103,8 +103,8 @@ public partial class Overview : ComponentBase
         }
         else if (Role == "rektor")
         {
-            await LoadGrades();          // NEU: wichtig für rektor-Listen
-            activeTab = "pending";       // optional, aber sinnvoll als default
+            await LoadGrades();         
+            activeTab = "pending";       
         }
     }
     private decimal ApplyRounding(decimal grade, string rounding)
@@ -138,7 +138,7 @@ public partial class Overview : ComponentBase
         MyGrades = await Http.GetFromJsonAsync<List<GradeResponse>>("api/grades/mine") ?? new();
     }
 
-    // ================= REKTOR LOAD (NEU) =================
+    // ================= REKTOR LOAD =================
     private async Task LoadGrades()
     {
         var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
@@ -326,10 +326,10 @@ public partial class Overview : ComponentBase
         }
     }
 
-    // ================= REKTOR DECISION MODAL (NEU) =================
+    // ================= REKTOR DECISION MODAL =================
     private void OpenModal(string type, int gradeId)
     {
-        modalType = type;           // "approved" oder "rejected"
+        modalType = type;           
         selectedGradeId = gradeId;
         decisionNote = "";
         showModal = true;

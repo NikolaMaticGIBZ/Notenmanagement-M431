@@ -334,19 +334,19 @@ else if (Role == "teacher")
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label fw-bold small text-secondary">Modul</label>
-                                            <InputText class="form-control" @bind-Value="editForm.ModuleName" />
+                                            <InputText class="form-control" placeholder="z. B. M123" @bind-Value="editForm.ModuleName" />
                                         </div>
 
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label fw-bold small text-secondary">Klasse</label>
-                                            <InputText class="form-control" @bind-Value="editForm.CourseName" />
+                                            <InputText class="form-control" placeholder="z. B. INFA1a" @bind-Value="editForm.CourseName" />
                                         </div>
                                     </div>
 
                                     <div class="row">
                                         <div class="col-md-8 mb-3">
                                             <label class="form-label fw-bold small text-secondary">Schüler</label>
-                                            <InputText class="form-control" @bind-Value="editForm.StudentName" />
+                                            <InputText class="form-control" placeholder="Max Muster" @bind-Value="editForm.StudentName" />
                                         </div>
 
                                         <div class="col-md-4 mb-3">
@@ -514,7 +514,6 @@ else if (Role == "rektor")
                 {
                     <div class="card shadow-sm border-0 mb-3 @(IsDark ? "bg-dark text-light border-secondary" : "")">
                         <div class="card-body p-4">
-                            @* Only show date/time if your GradeResponse has CreatedAt (optional) *@
                             @if (g.GetType().GetProperty("CreatedAt") != null)
                             {
                                 var createdAt = (DateTime?)g.GetType().GetProperty("CreatedAt")!.GetValue(g);
