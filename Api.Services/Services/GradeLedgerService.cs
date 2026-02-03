@@ -21,14 +21,14 @@ public class GradeLedgerService : IGradeLedgerService
 
     public async Task AddEntryAsync(Grade grade, string action, int actorUserId, string actorRole)
     {
-        var previousHash = await _db.GradeLedger
+        string? previousHash = await _db.GradeLedger
             .Where(e => e.Grade_id == grade.Id)
             .OrderByDescending(e => e.Created_at)
             .ThenByDescending(e => e.Id)
             .Select(e => e.Block_hash)
             .FirstOrDefaultAsync();
 
-        var snapshot = new GradeSnapshot
+        GradeSnapshot snapshot = new GradeSnapshot
         {
             GradeId = grade.Id,
             CourseName = grade.Course_name,
@@ -45,12 +45,12 @@ public class GradeLedgerService : IGradeLedgerService
             Action = action
         };
 
-        var snapshotJson = JsonSerializer.Serialize(snapshot);
-        var payloadHash = ComputeHash(snapshotJson);
-        var createdAt = DateTime.UtcNow;
-        var blockHash = ComputeHash($"{previousHash ?? GenesisHash}|{payloadHash}|{action}|{createdAt:o}|{actorUserId}|{actorRole}|{grade.Id}");
+        string snapshotJson = JsonSerializer.Serialize(snapshot);
+        string payloadHash = ComputeHash(snapshotJson);
+        DateTime createdAt = DateTime.UtcNow;
+        string blockHash = ComputeHash($"{previousHash ?? GenesisHash}|{payloadHash}|{action}|{createdAt:o}|{actorUserId}|{actorRole}|{grade.Id}");
 
-        var entry = new GradeLedgerEntry
+        GradeLedgerEntry entry = new GradeLedgerEntry
         {
             Grade_id = grade.Id,
             Action = action,
@@ -69,7 +69,7 @@ public class GradeLedgerService : IGradeLedgerService
 
     public async Task<List<GradeLedgerEntryResponse>> GetLedgerAsync(int gradeId)
     {
-        var entries = await _db.GradeLedger
+        List<GradeLedgerEntry> entries = await _db.GradeLedger
             .Where(e => e.Grade_id == gradeId)
             .OrderBy(e => e.Created_at)
             .ThenBy(e => e.Id)
@@ -92,7 +92,7 @@ public class GradeLedgerService : IGradeLedgerService
 
     public async Task<GradeLedgerVerificationResponse> VerifyLedgerAsync(int gradeId)
     {
-        var entries = await _db.GradeLedger
+        List<GradeLedgerEntry> entries = await _db.GradeLedger
             .Where(e => e.Grade_id == gradeId)
             .OrderBy(e => e.Created_at)
             .ThenBy(e => e.Id)
@@ -108,9 +108,9 @@ public class GradeLedgerService : IGradeLedgerService
         }
 
         string? previousHash = null;
-        foreach (var entry in entries)
+        foreach (GradeLedgerEntry? entry in entries)
         {
-            var payloadHash = ComputeHash(entry.Snapshot_json);
+            string payloadHash = ComputeHash(entry.Snapshot_json);
             if (!string.Equals(payloadHash, entry.Payload_hash, StringComparison.OrdinalIgnoreCase))
             {
                 return new GradeLedgerVerificationResponse
@@ -121,7 +121,7 @@ public class GradeLedgerService : IGradeLedgerService
                 };
             }
 
-            var expectedPrevious = previousHash ?? GenesisHash;
+            string expectedPrevious = previousHash ?? GenesisHash;
             if (!string.Equals(expectedPrevious, entry.Previous_hash, StringComparison.OrdinalIgnoreCase))
             {
                 return new GradeLedgerVerificationResponse
@@ -132,7 +132,7 @@ public class GradeLedgerService : IGradeLedgerService
                 };
             }
 
-            var expectedBlockHash = ComputeHash($"{entry.Previous_hash}|{entry.Payload_hash}|{entry.Action}|{entry.Created_at:o}|{entry.Actor_user_id}|{entry.Actor_role}|{entry.Grade_id}");
+            string expectedBlockHash = ComputeHash($"{entry.Previous_hash}|{entry.Payload_hash}|{entry.Action}|{entry.Created_at:o}|{entry.Actor_user_id}|{entry.Actor_role}|{entry.Grade_id}");
             if (!string.Equals(expectedBlockHash, entry.Block_hash, StringComparison.OrdinalIgnoreCase))
             {
                 return new GradeLedgerVerificationResponse
@@ -156,10 +156,10 @@ public class GradeLedgerService : IGradeLedgerService
 
     private static string ComputeHash(string input)
     {
-        using var sha = SHA256.Create();
-        var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(input));
-        var builder = new StringBuilder(bytes.Length * 2);
-        foreach (var b in bytes)
+        using SHA256 sha = SHA256.Create();
+        byte[] bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(input));
+        StringBuilder builder = new StringBuilder(bytes.Length * 2);
+        foreach (byte b in bytes)
         {
             builder.Append(b.ToString("x2"));
         }

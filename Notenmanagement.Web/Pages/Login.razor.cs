@@ -30,7 +30,7 @@ public partial class Login : ComponentBase
     protected override async Task OnInitializedAsync()
     {
         // Load theme from localStorage
-        var theme = await JS.InvokeAsync<string>("theme.get");
+        string theme = await JS.InvokeAsync<string>("theme.get");
         IsDark = theme == "dark";
 
         // Redirect if already logged in
@@ -50,7 +50,7 @@ public partial class Login : ComponentBase
     {
         ErrorMessage = string.Empty;
 
-        var request = new Shared.DTOs.LoginRequest
+        LoginRequest request = new Shared.DTOs.LoginRequest
         {
             Email = Email,
             Password = Password
@@ -58,11 +58,11 @@ public partial class Login : ComponentBase
 
         try
         {
-            var response = await Http.PostAsJsonAsync("api/auth/login", request);
+            HttpResponseMessage response = await Http.PostAsJsonAsync("api/auth/login", request);
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+                LoginResponse? result = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
                 // Temporäres 2FA-Flag setzen
                 await JS.InvokeVoidAsync("sessionStorage.setItem", "requires2FA", "true");

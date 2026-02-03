@@ -36,16 +36,16 @@ public class GradesController : ControllerBase
     [Authorize(Roles = "teacher")]
     public async Task<IActionResult> Create([FromBody] CreateGradeRequest request)
     {
-        var sub =
+        string? sub =
             User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
             User.FindFirstValue(ClaimTypes.NameIdentifier) ??
             User.FindFirstValue("sub") ??
             User.FindFirstValue("id");
 
-        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out var teacherId))
+        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out int teacherId))
             return Unauthorized("JWT does not contain a valid user id (sub).");
 
-        var result = await _gradesService.CreateGradeAsync(request, teacherId);
+        GradeResponse result = await _gradesService.CreateGradeAsync(request, teacherId);
         return Ok(result);
     }
 
@@ -58,7 +58,7 @@ public class GradesController : ControllerBase
     [Authorize(Roles = "rektor")]
     public async Task<IActionResult> GetAll([FromQuery] string? status)
     {
-        var result = await _gradesService.GetGradesAsync(status);
+        List<GradeResponse> result = await _gradesService.GetGradesAsync(status);
         return Ok(result);
     }
 
@@ -73,7 +73,7 @@ public class GradesController : ControllerBase
     [Authorize(Roles = "rektor")]
     public async Task<IActionResult> GetById(int id)
     {
-        var grade = await _gradesService.GetByIdAsync(id);
+        GradeResponse? grade = await _gradesService.GetByIdAsync(id);
         if (grade == null) return NotFound();
         return Ok(grade);
     }
@@ -89,16 +89,16 @@ public class GradesController : ControllerBase
     [Authorize(Roles = "rektor")]
     public async Task<IActionResult> Delete(int id)
     {
-        var sub =
+        string? sub =
             User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
             User.FindFirstValue(ClaimTypes.NameIdentifier) ??
             User.FindFirstValue("sub") ??
             User.FindFirstValue("id");
 
-        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out var rektorId))
+        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out int rektorId))
             return Unauthorized("JWT does not contain a valid user id (sub).");
 
-        var success = await _gradesService.DeleteGradeAsync(id, rektorId);
+        bool success = await _gradesService.DeleteGradeAsync(id, rektorId);
         if (!success) return NotFound();
         return NoContent();
     }
@@ -115,16 +115,16 @@ public class GradesController : ControllerBase
     [Authorize(Roles = "rektor")]
     public async Task<IActionResult> Decide(int id, [FromBody] DecideGradeRequest request)
     {
-        var sub =
+        string? sub =
             User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
             User.FindFirstValue(ClaimTypes.NameIdentifier) ??
             User.FindFirstValue("sub") ??
             User.FindFirstValue("id");
 
-        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out var rektorId))
+        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out int rektorId))
             return Unauthorized("JWT does not contain a valid user id (sub).");
 
-        var success = await _gradesService.DecideAsync(id, rektorId, request.Status, request.DecisionNote);
+        bool success = await _gradesService.DecideAsync(id, rektorId, request.Status, request.DecisionNote);
         if (!success) return NotFound();
         return NoContent();
     }
@@ -139,16 +139,16 @@ public class GradesController : ControllerBase
     [Authorize(Roles = "teacher")]
     public async Task<IActionResult> GetMine()
     {
-        var sub =
+        string? sub =
             User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
             User.FindFirstValue(ClaimTypes.NameIdentifier) ??
             User.FindFirstValue("sub") ??
             User.FindFirstValue("id");
 
-        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out var teacherId))
+        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out int teacherId))
             return Unauthorized("JWT does not contain a valid user id (sub).");
 
-        var result = await _gradesService.GetMyGradesAsync(teacherId);
+        List<GradeResponse> result = await _gradesService.GetMyGradesAsync(teacherId);
         return Ok(result);
     }
 
@@ -164,16 +164,16 @@ public class GradesController : ControllerBase
     [Authorize(Roles = "teacher")]
     public async Task<IActionResult> UpdateMine(int id, [FromBody] UpdateGradeRequest request)
     {
-        var sub =
+        string? sub =
             User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
             User.FindFirstValue(ClaimTypes.NameIdentifier) ??
             User.FindFirstValue("sub") ??
             User.FindFirstValue("id");
 
-        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out var teacherId))
+        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out int teacherId))
             return Unauthorized("JWT does not contain a valid user id (sub).");
 
-        var ok = await _gradesService.UpdateMyGradeAsync(id, teacherId, request);
+        bool ok = await _gradesService.UpdateMyGradeAsync(id, teacherId, request);
         if (!ok) return NotFound(); // not found OR not owned OR not pending
         return NoContent();
     }
@@ -190,16 +190,16 @@ public class GradesController : ControllerBase
     [Authorize(Roles = "teacher")]
     public async Task<IActionResult> DeleteMine(int id)
     {
-        var sub =
+        string? sub =
             User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
             User.FindFirstValue(ClaimTypes.NameIdentifier) ??
             User.FindFirstValue("sub") ??
             User.FindFirstValue("id");
 
-        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out var teacherId))
+        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out int teacherId))
             return Unauthorized("JWT does not contain a valid user id (sub).");
 
-        var ok = await _gradesService.DeleteMyGradeAsync(id, teacherId);
+        bool ok = await _gradesService.DeleteMyGradeAsync(id, teacherId);
         if (!ok) return NotFound(); // not found OR not owned OR not pending
         return NoContent();
     }

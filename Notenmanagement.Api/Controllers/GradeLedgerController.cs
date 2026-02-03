@@ -20,7 +20,7 @@ public class GradeLedgerController : ControllerBase
     [Authorize(Roles = "rektor,teacher")]
     public async Task<IActionResult> GetLedger(int gradeId)
     {
-        var entries = await _ledgerService.GetLedgerAsync(gradeId);
+        List<Shared.DTOs.GradeLedgerEntryResponse> entries = await _ledgerService.GetLedgerAsync(gradeId);
         return Ok(entries);
     }
 
@@ -28,7 +28,7 @@ public class GradeLedgerController : ControllerBase
     [Authorize(Roles = "rektor,teacher")]
     public async Task<IActionResult> VerifyLedger(int gradeId)
     {
-        var result = await _ledgerService.VerifyLedgerAsync(gradeId);
+        Shared.DTOs.GradeLedgerVerificationResponse result = await _ledgerService.VerifyLedgerAsync(gradeId);
         return Ok(result);
     }
 }

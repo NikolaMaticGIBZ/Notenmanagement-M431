@@ -69,3 +69,5 @@ INSERT INTO rektor (id, name) VALUES
 (2, 'Werner Odermatt'),
 (3, 'Patrick Zeiger'),
 (4, 'Alex Kobel');
+
+

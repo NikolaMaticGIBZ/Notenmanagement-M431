@@ -57,7 +57,7 @@ public class GradeRepository : IGradesRepository
     /// <inheritdoc/>
     public async Task<bool> DeleteAsync(int id)
     {
-        var grade = await _context.Grade.FindAsync(id);
+        Grade? grade = await _context.Grade.FindAsync(id);
         if (grade == null) return false;
         _context.Grade.Remove(grade);
         return await _context.SaveChangesAsync() > 0;

@@ -33,12 +33,12 @@ public partial class TwoFactor : ComponentBase
     protected override async Task OnInitializedAsync()
     {
         // Load theme automatically
-        var theme = await JS.InvokeAsync<string>("theme.get");
+        string theme = await JS.InvokeAsync<string>("theme.get");
         IsDark = theme == "dark";
 
         // Check 2FA session
-        var requires2FA = await JS.InvokeAsync<string>("sessionStorage.getItem", "requires2FA");
-        var userIdString = await JS.InvokeAsync<string>("sessionStorage.getItem", "userId");
+        string requires2FA = await JS.InvokeAsync<string>("sessionStorage.getItem", "requires2FA");
+        string userIdString = await JS.InvokeAsync<string>("sessionStorage.getItem", "userId");
 
         if (string.IsNullOrEmpty(requires2FA) || string.IsNullOrEmpty(userIdString))
         {
@@ -61,17 +61,17 @@ public partial class TwoFactor : ComponentBase
 
         try
         {
-            var request = new Verify2FARequest
+            Verify2FARequest request = new Verify2FARequest
             {
                 UserId = UserId,
                 Code = Code
             };
 
-            var response = await Http.PostAsJsonAsync("api/auth/verify-2fa", request);
+            HttpResponseMessage response = await Http.PostAsJsonAsync("api/auth/verify-2fa", request);
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<Verify2FAResponse>();
+                Verify2FAResponse? result = await response.Content.ReadFromJsonAsync<Verify2FAResponse>();
 
                 await JS.InvokeVoidAsync("localStorage.setItem", "jwt", result!.Token);
                 await JS.InvokeVoidAsync("sessionStorage.removeItem", "requires2FA");
@@ -102,21 +102,21 @@ public partial class TwoFactor : ComponentBase
 
         try
         {
-            var request = new Shared.DTOs.Resend2FARequest
+            Resend2FARequest request = new Shared.DTOs.Resend2FARequest
             {
                 UserId = UserId
             };
 
-            var response = await Http.PostAsJsonAsync("api/auth/resend-2fa", request);
+            HttpResponseMessage response = await Http.PostAsJsonAsync("api/auth/resend-2fa", request);
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<Resend2FAResponse>();
+                Resend2FAResponse? result = await response.Content.ReadFromJsonAsync<Resend2FAResponse>();
                 ResendMessage = result?.Message ?? "Code wurde erneut gesendet.";
             }
             else
             {
-                var error = await response.Content.ReadAsStringAsync();
+                string error = await response.Content.ReadAsStringAsync();
                 ResendMessage = $"Fehler beim Senden: {error}";
             }
         }

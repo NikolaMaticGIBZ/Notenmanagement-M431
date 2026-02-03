@@ -29,7 +29,7 @@ public class AuthRepository : IAuthRepository
         if (exists)
             return null;
 
-        var user = new User
+        User user = new User
         {
             Username = request.Username,
             Email = request.Email,
@@ -46,7 +46,7 @@ public class AuthRepository : IAuthRepository
     /// <inheritdoc/>
     public async Task<User?> LoginAsync(LoginRequest request)
     {
-        var user = await _context.User
+        User? user = await _context.User
             .FirstOrDefaultAsync(u => u.Email == request.Email);
 
         if (user == null)

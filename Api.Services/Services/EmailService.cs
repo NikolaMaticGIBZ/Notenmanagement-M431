@@ -25,7 +25,7 @@ public class EmailService : IEmailService
     /// <inheritdoc/>
     public async Task SendAsync(string to, string subject, string body)
     {
-        var smtp = new SmtpClient(_config["Smtp:Host"])
+        SmtpClient smtp = new SmtpClient(_config["Smtp:Host"])
         {
             Port = int.Parse(_config["Smtp:Port"]!),
             Credentials = new NetworkCredential(
@@ -35,7 +35,7 @@ public class EmailService : IEmailService
             EnableSsl = true
         };
 
-        var mail = new MailMessage
+        MailMessage mail = new MailMessage
         {
             From = new MailAddress(_config["Smtp:From"]!),
             Subject = subject,

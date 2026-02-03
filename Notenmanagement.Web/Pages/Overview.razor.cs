@@ -38,15 +38,15 @@ public partial class Overview : ComponentBase
     private string RektorValidationMessage { get; set; } = string.Empty;
 
     // ================= TEACHER STATE =================
-    private string teacherTab = "new"; 
-    private string myTab = "pending";  
+    private string teacherTab = "new";
+    private string myTab = "pending";
 
     private List<GradeResponse> MyGrades = new();
     private List<GradeResponse> MyPending => MyGrades.Where(x => x.Status == "pending").ToList();
     private List<GradeResponse> MyApproved => MyGrades.Where(x => x.Status == "approved").ToList();
     private List<GradeResponse> MyRejected => MyGrades.Where(x => x.Status == "rejected").ToList();
 
-    
+
     private bool showEditModal = false;
     private GradeResponse? editGrade;
     private UpdateGradeRequest editForm = new();
@@ -59,7 +59,7 @@ public partial class Overview : ComponentBase
     private List<GradeResponse> ApprovedGrades = new();
     private List<GradeResponse> RejectedGrades = new();
 
-    
+
     private bool showModal = false;
     private string modalType = "";
     private int selectedGradeId;
@@ -77,7 +77,7 @@ public partial class Overview : ComponentBase
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
-        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+        string token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
         if (string.IsNullOrEmpty(token) || IsTokenExpired(token))
         {
             await JS.InvokeVoidAsync("localStorage.removeItem", "jwt");
@@ -93,7 +93,7 @@ public partial class Overview : ComponentBase
             return;
         }
 
-        var theme = await JS.InvokeAsync<string>("theme.get");
+        string theme = await JS.InvokeAsync<string>("theme.get");
         IsDark = theme == "dark";
 
         if (Role == "teacher")
@@ -103,8 +103,8 @@ public partial class Overview : ComponentBase
         }
         else if (Role == "rektor")
         {
-            await LoadGrades();         
-            activeTab = "pending";       
+            await LoadGrades();
+            activeTab = "pending";
         }
     }
     private decimal ApplyRounding(decimal grade, string rounding)
@@ -131,7 +131,7 @@ public partial class Overview : ComponentBase
     // ================= TEACHER LOAD =================
     private async Task LoadMyGrades()
     {
-        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+        string token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
         if (string.IsNullOrEmpty(token)) return;
 
         Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -141,7 +141,7 @@ public partial class Overview : ComponentBase
     // ================= REKTOR LOAD =================
     private async Task LoadGrades()
     {
-        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+        string token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
         if (string.IsNullOrEmpty(token)) return;
 
         Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -163,14 +163,14 @@ public partial class Overview : ComponentBase
 
         try
         {
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+            string token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
             if (string.IsNullOrEmpty(token))
             {
                 await JS.InvokeVoidAsync("alert", "Sie sind nicht eingeloggt.");
                 return;
             }
 
-            var request = new CreateGradeRequest
+            CreateGradeRequest request = new CreateGradeRequest
             {
                 ModuleName = gradeForm.ModuleName,
                 CourseName = gradeForm.CourseName,
@@ -180,13 +180,13 @@ public partial class Overview : ComponentBase
                 Comment = gradeForm.Comment
             };
 
-            var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/grades")
+            HttpRequestMessage httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/grades")
             {
                 Content = JsonContent.Create(request)
             };
             httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var response = await Http.SendAsync(httpRequest);
+            HttpResponseMessage response = await Http.SendAsync(httpRequest);
 
             if (response.IsSuccessStatusCode)
             {
@@ -200,7 +200,7 @@ public partial class Overview : ComponentBase
             }
             else
             {
-                var errorText = await response.Content.ReadAsStringAsync();
+                string errorText = await response.Content.ReadAsStringAsync();
                 await JS.InvokeVoidAsync("alert", $"Fehler beim Senden: {errorText}");
             }
         }
@@ -270,16 +270,16 @@ public partial class Overview : ComponentBase
 
         try
         {
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+            string token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
             if (string.IsNullOrEmpty(token)) return;
 
             Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var res = await Http.PutAsJsonAsync($"api/grades/{editGrade.Id}", editForm);
+            HttpResponseMessage res = await Http.PutAsJsonAsync($"api/grades/{editGrade.Id}", editForm);
 
             if (!res.IsSuccessStatusCode)
             {
-                var txt = await res.Content.ReadAsStringAsync();
+                string txt = await res.Content.ReadAsStringAsync();
                 editError = txt;
                 return;
             }
@@ -302,12 +302,12 @@ public partial class Overview : ComponentBase
 
         try
         {
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+            string token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
             if (string.IsNullOrEmpty(token)) return;
 
             Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var res = await Http.DeleteAsync($"api/grades/mine/{editGrade.Id}");
+            HttpResponseMessage res = await Http.DeleteAsync($"api/grades/mine/{editGrade.Id}");
             if (res.IsSuccessStatusCode)
             {
                 showEditModal = false;
@@ -316,7 +316,7 @@ public partial class Overview : ComponentBase
             }
             else
             {
-                var txt = await res.Content.ReadAsStringAsync();
+                string txt = await res.Content.ReadAsStringAsync();
                 editError = $"Fehler beim Löschen: {txt}";
             }
         }
@@ -329,7 +329,7 @@ public partial class Overview : ComponentBase
     // ================= REKTOR DECISION MODAL =================
     private void OpenModal(string type, int gradeId)
     {
-        modalType = type;           
+        modalType = type;
         selectedGradeId = gradeId;
         decisionNote = "";
         showModal = true;
@@ -337,19 +337,19 @@ public partial class Overview : ComponentBase
     private void CloseModal() => showModal = false;
     private async Task ConfirmProrektorAction()
     {
-        var token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
+        string token = await JS.InvokeAsync<string>("localStorage.getItem", "jwt");
         if (string.IsNullOrEmpty(token)) return;
 
         Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var body = new { status = modalType, decisionNote = decisionNote };
 
-        var request = new HttpRequestMessage(new HttpMethod("PATCH"), $"api/grades/{selectedGradeId}/decision")
+        HttpRequestMessage request = new HttpRequestMessage(new HttpMethod("PATCH"), $"api/grades/{selectedGradeId}/decision")
         {
             Content = JsonContent.Create(body)
         };
 
-        var res = await Http.SendAsync(request);
+        HttpResponseMessage res = await Http.SendAsync(request);
         showModal = false;
 
         if (res.IsSuccessStatusCode)
@@ -358,7 +358,7 @@ public partial class Overview : ComponentBase
         }
         else
         {
-            var txt = await res.Content.ReadAsStringAsync();
+            string txt = await res.Content.ReadAsStringAsync();
             await JS.InvokeVoidAsync("alert", $"Fehler: {txt}");
         }
     }
@@ -372,7 +372,7 @@ public partial class Overview : ComponentBase
             return;
         }
 
-        var prompt = $"Ich bin Lehrer an der Berufsschule GIBZ Kanton Zug.\n" +
+        string prompt = $"Ich bin Lehrer an der Berufsschule GIBZ Kanton Zug.\n" +
                      $"Ich möchte für meinen Schüler {gradeForm.StudentName} in der Klasse {gradeForm.CourseName} " +
                      $"im Modul {gradeForm.ModuleName} eine Note von {gradeForm.GradeValue} eingeben.\n\n" +
                      "Bitte analysiere professionell, ob die Note mathematisch gerundet, auf- oder abgerundet werden sollte, " +
@@ -380,7 +380,7 @@ public partial class Overview : ComponentBase
                      "Gib eine klare Empfehlung (Aufrunden/Abrunden/Mathematisch) und eine kurze Begründung.\n\n" +
                      "Antworte so, dass ein Lehrer direkt entscheiden kann.";
 
-        var chatUrl = $"https://chat.openai.com/?prompt={Uri.EscapeDataString(prompt)}";
+        string chatUrl = $"https://chat.openai.com/?prompt={Uri.EscapeDataString(prompt)}";
         JS.InvokeVoidAsync("window.open", chatUrl, "_blank");
     }
     private async Task Logout()
@@ -393,18 +393,18 @@ public partial class Overview : ComponentBase
     {
         try
         {
-            var parts = token.Split('.');
+            string[] parts = token.Split('.');
             if (parts.Length != 3) return string.Empty;
-            var payload = parts[1].Replace('-', '+').Replace('_', '/');
+            string payload = parts[1].Replace('-', '+').Replace('_', '/');
             while (payload.Length % 4 != 0) payload += "=";
 
-            var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
-            var doc = System.Text.Json.JsonDocument.Parse(json);
+            string json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+            System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(json);
 
-            if (doc.RootElement.TryGetProperty("role", out var roleProp))
+            if (doc.RootElement.TryGetProperty("role", out System.Text.Json.JsonElement roleProp))
                 return roleProp.GetString()?.ToLower() ?? string.Empty;
 
-            if (doc.RootElement.TryGetProperty("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", out var claimRole))
+            if (doc.RootElement.TryGetProperty("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", out System.Text.Json.JsonElement claimRole))
                 return claimRole.GetString()?.ToLower() ?? string.Empty;
         }
         catch { }
@@ -414,14 +414,14 @@ public partial class Overview : ComponentBase
     {
         try
         {
-            var parts = token.Split('.');
+            string[] parts = token.Split('.');
             if (parts.Length != 3) return true;
 
-            var payload = parts[1].Replace('-', '+').Replace('_', '/');
+            string payload = parts[1].Replace('-', '+').Replace('_', '/');
             while (payload.Length % 4 != 0) payload += "=";
 
-            var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
-            var exp = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("exp").GetInt64();
+            string json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+            long exp = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("exp").GetInt64();
             return DateTimeOffset.FromUnixTimeSeconds(exp) < DateTimeOffset.UtcNow;
         }
         catch { return true; }

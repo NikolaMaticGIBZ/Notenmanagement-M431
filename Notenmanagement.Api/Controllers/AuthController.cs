@@ -40,7 +40,7 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
-        var email = request.Email.ToLower().Trim();
+        string email = request.Email.ToLower().Trim();
         string role = string.Empty;
 
         if (email.EndsWith("@gibz.ch"))
@@ -61,7 +61,7 @@ public class AuthController : ControllerBase
         }
         request.Role = role;
 
-        var user = await _authRepository.RegisterAsync(request);
+        global::Api.DataAccess.Models.User? user = await _authRepository.RegisterAsync(request);
         if (user == null)
             return BadRequest("Benutzer existiert bereits");
 
@@ -82,11 +82,11 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
-        var user = await _authRepository.LoginAsync(request);
+        global::Api.DataAccess.Models.User? user = await _authRepository.LoginAsync(request);
         if (user == null)
             return Unauthorized("Ungültige Anmeldedaten");
 
-        var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+        string code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
 
         user.Twofactor_code = code;
         user.Twofactor_expires = DateTime.UtcNow.AddMinutes(5);
@@ -100,7 +100,7 @@ public class AuthController : ControllerBase
             $"Ihr 2FA-Code lautet: {code}\nGültig für 5 Minuten."
         );
 
-        
+
         Console.WriteLine($"[2FA CODE für {user.Email}]: {code}");
 
         return Ok(new
@@ -121,7 +121,7 @@ public class AuthController : ControllerBase
     [HttpPost("verify-2fa")]
     public async Task<IActionResult> VerifyTwoFactor(Verify2FARequest request)
     {
-        var user = await _authRepository.GetByIdAsync(request.UserId);
+        global::Api.DataAccess.Models.User? user = await _authRepository.GetByIdAsync(request.UserId);
         if (user == null)
             return Unauthorized("User not found");
 
@@ -141,7 +141,7 @@ public class AuthController : ControllerBase
         await _authRepository.SaveAsync();
 
         // JWT generieren
-        var token = _jwtService.GenerateToken(user, user.Role);
+        string token = _jwtService.GenerateToken(user, user.Role);
 
         return Ok(new
         {
@@ -161,12 +161,12 @@ public class AuthController : ControllerBase
     [HttpPost("resend-2fa")]
     public async Task<IActionResult> ResendTwoFactor([FromBody] Resend2FARequest request)
     {
-        var user = await _authRepository.GetByIdAsync(request.UserId);
+        global::Api.DataAccess.Models.User? user = await _authRepository.GetByIdAsync(request.UserId);
         if (user == null)
             return NotFound("User not found");
 
         // Neuen 6-stelligen Code generieren
-        var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+        string code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
 
         user.Twofactor_code = code;
         user.Twofactor_expires = DateTime.UtcNow.AddMinutes(5);

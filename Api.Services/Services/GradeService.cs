@@ -29,16 +29,16 @@ public class GradeService : IGradeService
     public async Task<GradeResponse> CreateGradeAsync(CreateGradeRequest request, int teacherId)
     {
         // Validate teacher exists
-        var teacher = await _db.User.FirstOrDefaultAsync(u => u.Id == teacherId);
+        User? teacher = await _db.User.FirstOrDefaultAsync(u => u.Id == teacherId);
         if (teacher == null)
             throw new InvalidOperationException("Lehrer nicht gefunden.");
 
         // Validate rektor exists
-        var rektor = await _db.Rektor.FirstOrDefaultAsync(r => r.Id == request.RektorId);
+        Rektor? rektor = await _db.Rektor.FirstOrDefaultAsync(r => r.Id == request.RektorId);
         if (rektor == null)
             throw new InvalidOperationException("Prorektor nocht gefunden.");
 
-        var entity = new Grade
+        Grade entity = new Grade
         {
             Course_name = request.CourseName,
             Module_name = request.ModuleName,
@@ -63,7 +63,7 @@ public class GradeService : IGradeService
         await _ledgerService.AddEntryAsync(entity, "created", teacherId, "teacher");
 
         // Reload with navigation props for names
-        var saved = await _db.Grade
+        Grade saved = await _db.Grade
             .Include(g => g.Teacher)
             .Include(g => g.Rektor)
             .FirstAsync(g => g.Id == entity.Id);
@@ -74,14 +74,14 @@ public class GradeService : IGradeService
     /// <inheritdoc/>
     public async Task<List<GradeResponse>> GetGradesAsync(string? status)
     {
-        var query = _db.Grade
+        IQueryable<Grade> query = _db.Grade
             .Include(g => g.Teacher)
             .Include(g => g.Rektor)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(status))
         {
-            var s = status.Trim().ToLower();
+            string s = status.Trim().ToLower();
 
             // only allow known values (optional but good)
             if (s is not ("pending" or "approved" or "rejected"))
@@ -90,7 +90,7 @@ public class GradeService : IGradeService
             query = query.Where(g => g.Status.ToLower() == s);
         }
 
-        var grades = await query
+        List<Grade> grades = await query
             .OrderByDescending(g => g.Created_at)
             .ToListAsync();
 
@@ -100,7 +100,7 @@ public class GradeService : IGradeService
     /// <inheritdoc/>
     public async Task<GradeResponse?> GetByIdAsync(int id)
     {
-        var grade = await _db.Grade
+        Grade? grade = await _db.Grade
             .Include(g => g.Teacher)
             .Include(g => g.Rektor)
             .FirstOrDefaultAsync(g => g.Id == id);
@@ -113,10 +113,10 @@ public class GradeService : IGradeService
     /// <inheritdoc/>
     public async Task<bool> DecideAsync(int gradeId, int rektorId, string status, string? decisionNote)
     {
-        var grade = await _db.Grade.FirstOrDefaultAsync(g => g.Id == gradeId);
+        Grade? grade = await _db.Grade.FirstOrDefaultAsync(g => g.Id == gradeId);
         if (grade == null) return false;
 
-        var s = status?.Trim().ToLower();
+        string? s = status?.Trim().ToLower();
         if (s is not ("approved" or "rejected"))
             throw new ArgumentException("Status must be 'approved' or 'rejected'.");
 
@@ -132,7 +132,7 @@ public class GradeService : IGradeService
     /// <inheritdoc/>
     public async Task<bool> DeleteGradeAsync(int id, int rektorId)
     {
-        var grade = await _db.Grade.FirstOrDefaultAsync(g => g.Id == id);
+        Grade? grade = await _db.Grade.FirstOrDefaultAsync(g => g.Id == id);
         if (grade == null) return false;
 
         await _ledgerService.AddEntryAsync(grade, "deleted", rektorId, "rektor");
@@ -144,7 +144,7 @@ public class GradeService : IGradeService
     /// <inheritdoc/>
     public async Task<List<GradeResponse>> GetMyGradesAsync(int teacherId)
     {
-        var grades = await _db.Grade
+        List<Grade> grades = await _db.Grade
             .Include(g => g.Teacher)
             .Include(g => g.Rektor)
             .Where(g => g.Teacher_id == teacherId)
@@ -157,7 +157,7 @@ public class GradeService : IGradeService
     /// <inheritdoc/>
     public async Task<bool> UpdateMyGradeAsync(int gradeId, int teacherId, UpdateGradeRequest request)
     {
-        var grade = await _db.Grade.FirstOrDefaultAsync(g => g.Id == gradeId && g.Teacher_id == teacherId);
+        Grade? grade = await _db.Grade.FirstOrDefaultAsync(g => g.Id == gradeId && g.Teacher_id == teacherId);
         if (grade == null) return false;
 
         // only editable if pending
@@ -165,7 +165,7 @@ public class GradeService : IGradeService
             return false;
 
         // validate rektor exists (optional but good)
-        var rektorExists = await _db.Rektor.AnyAsync(r => r.Id == request.RektorId);
+        bool rektorExists = await _db.Rektor.AnyAsync(r => r.Id == request.RektorId);
         if (!rektorExists) throw new InvalidOperationException("Prorektor nicht gefunden.");
 
         grade.Course_name = request.CourseName;
@@ -185,7 +185,7 @@ public class GradeService : IGradeService
     /// <inheritdoc/>
     public async Task<bool> DeleteMyGradeAsync(int id, int teacherId)
     {
-        var grade = await _db.Grade.FirstOrDefaultAsync(g => g.Id == id);
+        Grade? grade = await _db.Grade.FirstOrDefaultAsync(g => g.Id == id);
         if (grade == null) return false;
 
         // must be owner

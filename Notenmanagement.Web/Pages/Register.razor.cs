@@ -32,7 +32,7 @@ public partial class Register : ComponentBase
     protected override async Task OnInitializedAsync()
     {
         // Load theme from localStorage
-        var theme = await JS.InvokeAsync<string>("theme.get");
+        string theme = await JS.InvokeAsync<string>("theme.get");
         IsDark = theme == "dark";
 
         if (await AuthHelper.IsLoggedIn(JS))
@@ -51,7 +51,7 @@ public partial class Register : ComponentBase
         ErrorMessage = string.Empty;
         SuccessMessage = string.Empty;
 
-        var email = Email.ToLower().Trim();
+        string email = Email.ToLower().Trim();
 
         if (!email.EndsWith("@gibz.ch") && !email.EndsWith("@zg.ch") && !email.EndsWith("@hotmail.com") && !email.EndsWith("@gmail.com"))
         {
@@ -59,7 +59,7 @@ public partial class Register : ComponentBase
             return;
         }
 
-        var request = new Shared.DTOs.RegisterRequest
+        Shared.DTOs.RegisterRequest request = new Shared.DTOs.RegisterRequest
         {
             Username = Username,
             Email = Email,
@@ -68,7 +68,7 @@ public partial class Register : ComponentBase
 
         try
         {
-            var response = await Http.PostAsJsonAsync("api/auth/register", request);
+            HttpResponseMessage response = await Http.PostAsJsonAsync("api/auth/register", request);
 
             if (response.IsSuccessStatusCode)
             {
