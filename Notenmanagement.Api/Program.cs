@@ -55,6 +55,7 @@ public class Program
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IGradesRepository, GradeRepository>();
         builder.Services.AddScoped<IGradeService, GradeService>();
+        builder.Services.AddScoped<IGradeLedgerService, GradeLedgerService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddSingleton<JwtService>();
 

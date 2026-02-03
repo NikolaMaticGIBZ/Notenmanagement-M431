@@ -18,6 +18,7 @@ public class AppDBContext : DbContext
     public DbSet<User> User { get; set; } = null!;
     public DbSet<Rektor> Rektor { get; set; } = null!;
     public DbSet<Grade> Grade { get; set; } = null!;
+    public DbSet<GradeLedgerEntry> GradeLedger { get; set; } = null!;
 
     /// <summary>
     /// Override this method to further configure the model that was discovered by convention from the entity types
