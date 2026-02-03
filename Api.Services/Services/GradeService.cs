@@ -13,14 +13,16 @@ namespace Api.Services.Services;
 public class GradeService : IGradeService
 {
     private readonly AppDBContext _db;
+    private readonly IGradeLedgerService _ledgerService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GradeService"/> class.
     /// </summary>
     /// <param name="db">The database.</param>
-    public GradeService(AppDBContext db)
+    public GradeService(AppDBContext db, IGradeLedgerService ledgerService)
     {
         _db = db;
+        _ledgerService = ledgerService;
     }
 
     /// <inheritdoc/>
@@ -57,6 +59,8 @@ public class GradeService : IGradeService
 
         _db.Grade.Add(entity);
         await _db.SaveChangesAsync();
+
+        await _ledgerService.AddEntryAsync(entity, "created", teacherId, "teacher");
 
         // Reload with navigation props for names
         var saved = await _db.Grade
@@ -107,7 +111,7 @@ public class GradeService : IGradeService
     }
 
     /// <inheritdoc/>
-    public async Task<bool> DecideAsync(int gradeId, string status, string? decisionNote)
+    public async Task<bool> DecideAsync(int gradeId, int rektorId, string status, string? decisionNote)
     {
         var grade = await _db.Grade.FirstOrDefaultAsync(g => g.Id == gradeId);
         if (grade == null) return false;
@@ -118,17 +122,20 @@ public class GradeService : IGradeService
 
         grade.Status = s;
         grade.Decision_note = string.IsNullOrWhiteSpace(decisionNote) ? null : decisionNote.Trim();
+        grade.prorektor_id = rektorId;
 
         await _db.SaveChangesAsync();
+        await _ledgerService.AddEntryAsync(grade, "decided", rektorId, "rektor");
         return true;
     }
 
     /// <inheritdoc/>
-    public async Task<bool> DeleteGradeAsync(int id)
+    public async Task<bool> DeleteGradeAsync(int id, int rektorId)
     {
         var grade = await _db.Grade.FirstOrDefaultAsync(g => g.Id == id);
         if (grade == null) return false;
 
+        await _ledgerService.AddEntryAsync(grade, "deleted", rektorId, "rektor");
         _db.Grade.Remove(grade);
         await _db.SaveChangesAsync();
         return true;
@@ -171,6 +178,7 @@ public class GradeService : IGradeService
         grade.Comment = string.IsNullOrWhiteSpace(request.Comment) ? null : request.Comment.Trim();
 
         await _db.SaveChangesAsync();
+        await _ledgerService.AddEntryAsync(grade, "updated", teacherId, "teacher");
         return true;
     }
 
@@ -187,6 +195,7 @@ public class GradeService : IGradeService
         if (!string.Equals(grade.Status, "pending", StringComparison.OrdinalIgnoreCase))
             return false;
 
+        await _ledgerService.AddEntryAsync(grade, "deleted", teacherId, "teacher");
         _db.Grade.Remove(grade);
         await _db.SaveChangesAsync();
         return true;

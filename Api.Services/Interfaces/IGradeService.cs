@@ -67,12 +67,12 @@ public interface IGradeService
     /// <param name="decisionNote">The decision note.</param>
     /// <returns>Returns false if grade isnt found, else a true if succesful</returns>
     /// <exception cref="System.ArgumentException">Status must be 'approved' or 'rejected'.</exception>
-    Task<bool> DecideAsync(int gradeId, string status, string? decisionNote);
+    Task<bool> DecideAsync(int gradeId, int rektorId, string status, string? decisionNote);
 
     /// <summary>
     /// Deletes a specific grade asynchronous.
     /// </summary>
     /// <param name="id">The identifier.</param>
     /// <returns>if grade isnt found it returns a false, else if succesful a true</returns>
-    Task<bool> DeleteGradeAsync(int id);
+    Task<bool> DeleteGradeAsync(int id, int rektorId);
 }

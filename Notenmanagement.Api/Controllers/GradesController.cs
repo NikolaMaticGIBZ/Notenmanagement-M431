@@ -89,7 +89,16 @@ public class GradesController : ControllerBase
     [Authorize(Roles = "rektor")]
     public async Task<IActionResult> Delete(int id)
     {
-        var success = await _gradesService.DeleteGradeAsync(id);
+        var sub =
+            User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub") ??
+            User.FindFirstValue("id");
+
+        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out var rektorId))
+            return Unauthorized("JWT does not contain a valid user id (sub).");
+
+        var success = await _gradesService.DeleteGradeAsync(id, rektorId);
         if (!success) return NotFound();
         return NoContent();
     }
@@ -106,7 +115,16 @@ public class GradesController : ControllerBase
     [Authorize(Roles = "rektor")]
     public async Task<IActionResult> Decide(int id, [FromBody] DecideGradeRequest request)
     {
-        var success = await _gradesService.DecideAsync(id, request.Status, request.DecisionNote);
+        var sub =
+            User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub") ??
+            User.FindFirstValue("id");
+
+        if (string.IsNullOrWhiteSpace(sub) || !int.TryParse(sub, out var rektorId))
+            return Unauthorized("JWT does not contain a valid user id (sub).");
+
+        var success = await _gradesService.DecideAsync(id, rektorId, request.Status, request.DecisionNote);
         if (!success) return NotFound();
         return NoContent();
     }

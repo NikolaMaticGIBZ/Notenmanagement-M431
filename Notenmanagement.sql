@@ -48,6 +48,20 @@ CREATE TABLE grades (
     CONSTRAINT fk_grades_prorektor
         FOREIGN KEY (prorektor_id) REFERENCES users(id) ON DELETE SET NULL
 );
+
+-- Blockchain-like ledger for grade changes
+CREATE TABLE grade_ledger (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    grade_id INT NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    snapshot_json VARCHAR(4000) NOT NULL,
+    payload_hash VARCHAR(128) NOT NULL,
+    previous_hash VARCHAR(128) NOT NULL,
+    block_hash VARCHAR(128) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actor_user_id INT NOT NULL,
+    actor_role VARCHAR(50) NOT NULL
+);
  
 -- Initial rektor data
 INSERT INTO rektor (id, name) VALUES
